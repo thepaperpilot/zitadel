@@ -1714,6 +1714,10 @@
       "APPLE": {
         "TITLE": "Sign in with Apple",
         "DESCRIPTION": "Enter the credentials for your Apple Provider"
+      },
+      "DISCORD": {
+        "TITLE": "Sign in with Discord",
+        "DESCRIPTION": "Enter the credentials for your Discord Identity Provider"
       }
     },
     "DETAIL": {

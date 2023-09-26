@@ -481,3 +481,23 @@ func updateAppleProviderToCommand(req *mgmt_pb.UpdateAppleProviderRequest) comma
 		IDPOptions: idp_grpc.OptionsToCommand(req.ProviderOptions),
 	}
 }
+
+func addDiscordProviderToCommand(req *mgmt_pb.AddDiscordProviderRequest) command.DiscordProvider {
+	return command.DiscordProvider{
+		Name:         req.Name,
+		ClientID:     req.ClientId,
+		ClientSecret: req.ClientSecret,
+		Scopes:       req.Scopes,
+		IDPOptions:   idp_grpc.OptionsToCommand(req.ProviderOptions),
+	}
+}
+
+func updateDiscordProviderToCommand(req *mgmt_pb.UpdateDiscordProviderRequest) command.DiscordProvider {
+	return command.DiscordProvider{
+		Name:         req.Name,
+		ClientID:     req.ClientId,
+		ClientSecret: req.ClientSecret,
+		Scopes:       req.Scopes,
+		IDPOptions:   idp_grpc.OptionsToCommand(req.ProviderOptions),
+	}
+}

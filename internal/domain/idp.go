@@ -37,6 +37,7 @@ const (
 	IDPTypeGitLabSelfHosted
 	IDPTypeGoogle
 	IDPTypeApple
+	IDPTypeDiscord
 )
 
 func (t IDPType) GetCSSClass() string {
@@ -53,6 +54,8 @@ func (t IDPType) GetCSSClass() string {
 		return "azure"
 	case IDPTypeApple:
 		return "apple"
+	case IDPTypeDiscord:
+		return "discord"
 	case IDPTypeUnspecified,
 		IDPTypeOIDC,
 		IDPTypeJWT,
@@ -83,6 +86,8 @@ func (t IDPType) DisplayName() string {
 		return "Google"
 	case IDPTypeApple:
 		return "Apple"
+	case IDPTypeDiscord:
+		return "Discord"
 	case IDPTypeUnspecified,
 		IDPTypeOIDC,
 		IDPTypeJWT,

@@ -120,6 +120,14 @@ type AppleProvider struct {
 	IDPOptions idp.Options
 }
 
+type DiscordProvider struct {
+	Name         string
+	ClientID     string
+	ClientSecret string
+	Scopes       []string
+	IDPOptions   idp.Options
+}
+
 func ExistsIDP(ctx context.Context, filter preparation.FilterToQueryReducer, id, orgID string) (exists bool, err error) {
 	writeModel := NewOrgIDPRemoveWriteModel(orgID, id)
 	events, err := filter(ctx, writeModel.Query())

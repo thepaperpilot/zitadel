@@ -103,6 +103,8 @@ func RegisterEventMappers(es *eventstore.Eventstore) {
 		RegisterFilterEventMapper(AggregateType, LDAPIDPChangedEventType, LDAPIDPChangedEventMapper).
 		RegisterFilterEventMapper(AggregateType, AppleIDPAddedEventType, AppleIDPAddedEventMapper).
 		RegisterFilterEventMapper(AggregateType, AppleIDPChangedEventType, AppleIDPChangedEventMapper).
+		RegisterFilterEventMapper(AggregateType, DiscordIDPAddedEventType, DiscordIDPAddedEventMapper).
+		RegisterFilterEventMapper(AggregateType, DiscordIDPChangedEventType, DiscordIDPChangedEventMapper).
 		RegisterFilterEventMapper(AggregateType, IDPRemovedEventType, IDPRemovedEventMapper).
 		RegisterFilterEventMapper(AggregateType, TriggerActionsSetEventType, TriggerActionsSetEventMapper).
 		RegisterFilterEventMapper(AggregateType, TriggerActionsCascadeRemovedEventType, TriggerActionsCascadeRemovedEventMapper).

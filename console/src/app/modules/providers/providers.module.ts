@@ -19,6 +19,7 @@ import { StringListModule } from '../string-list/string-list.module';
 import { LDAPAttributesComponent } from './ldap-attributes/ldap-attributes.component';
 import { ProviderAppleComponent } from './provider-apple/provider-apple.component';
 import { ProviderAzureADComponent } from './provider-azure-ad/provider-azure-ad.component';
+import { ProviderDiscordComponent } from './provider-discord/provider-discord.component';
 import { ProviderGithubESComponent } from './provider-github-es/provider-github-es.component';
 import { ProviderGithubComponent } from './provider-github/provider-github.component';
 import { ProviderGitlabSelfHostedComponent } from './provider-gitlab-self-hosted/provider-gitlab-self-hosted.component';
@@ -45,6 +46,7 @@ import { ProvidersRoutingModule } from './providers-routing.module';
     ProviderOAuthComponent,
     ProviderLDAPComponent,
     ProviderAppleComponent,
+    ProviderDiscordComponent,
   ],
   imports: [
     ProvidersRoutingModule,
