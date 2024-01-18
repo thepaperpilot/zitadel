@@ -17,49 +17,49 @@ $material-design-icons-font-directory-path: '~material-design-icons-iconfont/dis
   --mat-table-row-item-label-text-size: 14px;
   --mat-menu-item-label-text-size: 14px;
 
-  --grey: #8795a1;
-  --warn: #ff3b5b;
-  --success: #10b981;
-  --table-row-back: #363738;
+  --grey: #D8DEE9;
+  --warn: #D08770;
+  --success: #A3BE8C;
+  --table-row-back: #2E3440;
 
-  --theme-dark-background-50: #7c93c6;
+  --theme-dark-background-50: #D8DEE9;
   --theme-dark-background-contrast-50: hsla(0, 0%, 0%, 0.87);
-  --theme-dark-background-100: #4a69aa;
-  --theme-dark-background-contrast-100: #ffffff;
-  --theme-dark-background-200: #395183;
-  --theme-dark-background-contrast-200: #ffffff;
+  --theme-dark-background-100: #243252;
+  --theme-dark-background-contrast-100: #ECEFF4;
+  --theme-dark-background-200: #243252;
+  --theme-dark-background-contrast-200: #ECEFF4;
   --theme-dark-background-300: #243252;
-  --theme-dark-background-contrast-300: #ffffff;
-  --theme-dark-background-400: #1a253c;
-  --theme-dark-background-contrast-400: #ffffff;
-  --theme-dark-background-500: #111827;
-  --theme-dark-background-contrast-500: #ffffff;
-  --theme-dark-background-600: #080b12;
-  --theme-dark-background-contrast-600: #ffffff;
-  --theme-dark-background-700: #000000;
-  --theme-dark-background-contrast-700: #ffffff;
-  --theme-dark-background-800: #000000;
-  --theme-dark-background-contrast-800: #ffffff;
-  --theme-dark-background-900: #000000;
-  --theme-dark-background-contrast-900: #ffffff;
-  --theme-dark-background-A100: #5782e0;
+  --theme-dark-background-contrast-300: #ECEFF4;
+  --theme-dark-background-400: #4C566A;
+  --theme-dark-background-contrast-400: #ECEFF4;
+  --theme-dark-background-500: #434C5E;
+  --theme-dark-background-contrast-500: #ECEFF4;
+  --theme-dark-background-600: #3B4252;
+  --theme-dark-background-contrast-600: #ECEFF4;
+  --theme-dark-background-700: #2E3440;
+  --theme-dark-background-contrast-700: #ECEFF4;
+  --theme-dark-background-800: #2E3440;
+  --theme-dark-background-contrast-800: #ECEFF4;
+  --theme-dark-background-900: #2E3440;
+  --theme-dark-background-contrast-900: #ECEFF4;
+  --theme-dark-background-A100: #81A1C1;
   --theme-dark-background-contrast-A100: hsla(0, 0%, 0%, 0.87);
-  --theme-dark-background-A200: #204eb1;
-  --theme-dark-background-contrast-A200: #ffffff;
-  --theme-dark-background-A400: #182b53;
-  --theme-dark-background-contrast-A400: #ffffff;
-  --theme-dark-background-A700: #17223b;
-  --theme-dark-background-contrast-A700: #ffffff;
+  --theme-dark-background-A200: #5E81AC;
+  --theme-dark-background-contrast-A200: #ECEFF4;
+  --theme-dark-background-A400: #3B4252;
+  --theme-dark-background-contrast-A400: #ECEFF4;
+  --theme-dark-background-A700: #2E3440;
+  --theme-dark-background-contrast-A700: #ECEFF4;
 
-  --theme-light-background-50: #ffffff;
+  --theme-light-background-50: #ECEFF4;
   --theme-light-background-contrast-50: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-100: #ffffff;
+  --theme-light-background-100: #ECEFF4;
   --theme-light-background-contrast-100: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-200: #ffffff;
+  --theme-light-background-200: #ECEFF4;
   --theme-light-background-contrast-200: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-300: #ffffff;
+  --theme-light-background-300: #ECEFF4;
   --theme-light-background-contrast-300: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-400: #ffffff;
+  --theme-light-background-400: #ECEFF4;
   --theme-light-background-contrast-400: hsla(0, 0%, 0%, 0.87);
   --theme-light-background-500: #fafafa;
   --theme-light-background-contrast-500: hsla(0, 0%, 0%, 0.87);
@@ -71,19 +71,19 @@ $material-design-icons-font-directory-path: '~material-design-icons-iconfont/dis
   --theme-light-background-contrast-800: hsla(0, 0%, 0%, 0.87);
   --theme-light-background-900: #bdbdbd;
   --theme-light-background-contrast-900: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-A100: #ffffff;
+  --theme-light-background-A100: #ECEFF4;
   --theme-light-background-contrast-A100: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-A200: #ffffff;
+  --theme-light-background-A200: #ECEFF4;
   --theme-light-background-contrast-A200: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-A400: #ffffff;
+  --theme-light-background-A400: #ECEFF4;
   --theme-light-background-contrast-A400: hsla(0, 0%, 0%, 0.87);
-  --theme-light-background-A700: #ffffff;
+  --theme-light-background-A700: #ECEFF4;
   --theme-light-background-contrast-A700: hsla(0, 0%, 0%, 0.87);
 
-  --theme-dark-text: #ffffff;
-  --theme-dark-secondary-text: #ffffffc7;
-  --theme-light-text: #000000;
-  --theme-light-secondary-text: #000000c7;
+  --theme-dark-text: #ECEFF4;
+  --theme-dark-secondary-text: #ECEFF4c7;
+  --theme-light-text: #2E3440;
+  --theme-light-secondary-text: #2E3440c7;
 }
 
 $cnsl-dark-background: (
@@ -186,8 +186,8 @@ $cnsl-dark-theme-background: (
   state-inactive: #af455359,
   toolbar: rgba(map_get($cnsl-dark-background, 500), 0.9),
   moz-toolbar: map_get($cnsl-dark-background, 500),
-  footer: #00000020,
-  metadata-section: #00000020,
+  footer: #2E344020,
+  metadata-section: #2E344020,
   alert: #fbbf24,
   toast: map_get($cnsl-dark-background, 400),
 );
@@ -197,7 +197,7 @@ $cnsl-light-theme-background: (
   app-bar: map_get($cnsl-light-background, 100),
   background: map_get($cnsl-light-background, 500),
   hover: rgba(black, 0.04),
-  contributor: #00000010,
+  contributor: #2E344010,
   contributor-avatar: map_get($caos-light-primary, 300),
   card: #fff,
   // set fixed color due to https://github.com/angular/components/pull/14253
@@ -220,7 +220,7 @@ $cnsl-light-theme-background: (
   successinfosection: #cbf4c9,
   toolbar: rgba(map_get($cnsl-light-background, 500), 0.9),
   moz-toolbar: map_get($cnsl-light-background, 500),
-  footer: #00000008,
+  footer: #2E344008,
   metadata-section: #605f5f08,
   alert: rgb(251, 191, 36),
   toast: map_get($cnsl-light-background, 400),
@@ -248,7 +248,7 @@ $cnsl-dark-theme-foreground: (
   alertinfosection: rgb(251, 191, 36),
   successinfosection: #cbf4c9,
   toolbar-items: map-get(map-get($caos-dark-primary, contrast), 500),
-  slash: #ffffff6e,
+  slash: #ECEFF46e,
 );
 
 $cnsl-light-theme-foreground: (
@@ -273,7 +273,7 @@ $cnsl-light-theme-foreground: (
   alertinfosection: rgb(146, 64, 14),
   successinfosection: #0e6245,
   toolbar-items: map-get(map-get($caos-light-primary, contrast), 500),
-  slash: #0000006e,
+  slash: #2E34406e,
 );
 
 $custom-level: mat.define-typography-level(
@@ -389,7 +389,7 @@ $caos-dark-app-theme: modify-palette($caos-dark-app-theme, foreground, $cnsl-dar
 .progress {
   --mdc-linear-progress-active-indicator-color: var(--success);
   --mdc-linear-progress-track-height: 8px !important;
-  --mdc-linear-progress-track-color: #00000010;
+  --mdc-linear-progress-track-color: #2E344010;
   --mat-select-enabled-trigger-text-color: #000;
   --mdc-linear-progress-active-indicator-height: 8px !important;
 }
@@ -411,7 +411,7 @@ $caos-dark-app-theme: modify-palette($caos-dark-app-theme, foreground, $cnsl-dar
   --mat-menu-item-label-text-size: 14px;
 
   .progress {
-    --mdc-linear-progress-track-color: #00000010;
+    --mdc-linear-progress-track-color: #2E344010;
     --mdc-linear-progress-active-indicator-color: var(--success);
   }
 
@@ -493,7 +493,7 @@ $caos-dark-app-theme: modify-palette($caos-dark-app-theme, foreground, $cnsl-dar
   --mat-menu-item-label-text-size: 14px;
 
   .progress {
-    --mdc-linear-progress-track-color: #ffffff20;
+    --mdc-linear-progress-track-color: #ECEFF420;
     --mdc-linear-progress-active-indicator-color: var(--success);
   }
 

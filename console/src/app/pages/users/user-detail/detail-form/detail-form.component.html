@@ -33,28 +33,8 @@
     </div>
     <div class="user-grid">
       <cnsl-form-field class="formfield">
-        <cnsl-label>{{ 'USER.PROFILE.FIRSTNAME' | translate }}</cnsl-label>
-        <input cnslInput formControlName="givenName" />
-      </cnsl-form-field>
-      <cnsl-form-field class="formfield">
-        <cnsl-label>{{ 'USER.PROFILE.LASTNAME' | translate }}</cnsl-label>
-        <input cnslInput formControlName="familyName" />
-      </cnsl-form-field>
-      <cnsl-form-field class="formfield">
-        <cnsl-label>{{ 'USER.PROFILE.NICKNAME' | translate }}</cnsl-label>
-        <input cnslInput formControlName="nickName" />
-      </cnsl-form-field>
-      <cnsl-form-field class="formfield">
         <cnsl-label>{{ 'USER.PROFILE.DISPLAYNAME' | translate }}</cnsl-label>
         <input cnslInput formControlName="displayName" />
-      </cnsl-form-field>
-      <cnsl-form-field class="formfield">
-        <cnsl-label>{{ 'USER.PROFILE.GENDER' | translate }}</cnsl-label>
-        <mat-select formControlName="gender">
-          <mat-option *ngFor="let gender of genders" [value]="gender">
-            {{ 'GENDERS.' + gender | translate }}
-          </mat-option>
-        </mat-select>
       </cnsl-form-field>
       <cnsl-form-field class="formfield">
         <cnsl-label>{{ 'USER.PROFILE.PREFERRED_LANGUAGE' | translate }}</cnsl-label>
