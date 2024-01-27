@@ -2,6 +2,7 @@ package login
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/zitadel/logging"
 
@@ -82,6 +83,10 @@ func (l *Login) handleLoginNameCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	userAgentID, _ := http_mw.UserAgentIDFromCtx(r.Context())
 	loginName := data.LoginName
+	logging.WithFields("loginName", loginName).Info("!!")
+	if !strings.Contains(loginName, "@") {
+		loginName = loginName + "@incremental.social"
+	}
 	err = l.authRepo.CheckLoginName(r.Context(), authReq.ID, loginName, userAgentID)
 	if err != nil {
 		l.renderLogin(w, r, authReq, err)
