@@ -86,10 +86,10 @@ func (h *AddHuman) Validate(hasher *crypto.PasswordHasher) (err error) {
 	}
 
 	if h.FirstName = strings.TrimSpace(h.FirstName); h.FirstName == "" {
-		return zerrors.ThrowInvalidArgument(nil, "USER-UCej2", "Errors.User.Profile.FirstNameEmpty")
+		h.FirstName = h.Username
 	}
 	if h.LastName = strings.TrimSpace(h.LastName); h.LastName == "" {
-		return zerrors.ThrowInvalidArgument(nil, "USER-4hB7d", "Errors.User.Profile.LastNameEmpty")
+		h.LastName = h.Username
 	}
 	h.ensureDisplayName()
 
@@ -384,12 +384,8 @@ func (h *AddHuman) ensureDisplayName() {
 	if strings.TrimSpace(h.DisplayName) != "" {
 		return
 	}
-	if strings.TrimSpace(h.FirstName) != "" && strings.TrimSpace(h.LastName) != "" {
-		h.DisplayName = h.FirstName + " " + h.LastName
-		return
-	}
-	if strings.TrimSpace(string(h.Email.Address)) != "" {
-		h.DisplayName = string(h.Email.Address)
+	if strings.TrimSpace(h.FirstName) != "" {
+		h.DisplayName = h.FirstName
 		return
 	}
 	h.DisplayName = h.Username
