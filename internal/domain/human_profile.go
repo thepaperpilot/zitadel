@@ -24,12 +24,6 @@ func (p *Profile) Validate() error {
 	if p == nil {
 		return zerrors.ThrowInvalidArgument(nil, "PROFILE-GPY3p", "Errors.User.Profile.Empty")
 	}
-	if p.FirstName == "" {
-		return zerrors.ThrowInvalidArgument(nil, "PROFILE-RF5z2", "Errors.User.Profile.FirstNameEmpty")
-	}
-	if p.LastName == "" {
-		return zerrors.ThrowInvalidArgument(nil, "PROFILE-DSUkN", "Errors.User.Profile.LastNameEmpty")
-	}
 	return nil
 }
 

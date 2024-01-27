@@ -22,7 +22,7 @@
 
         <div class="lgn-field double">
             <label class="lgn-label" for="email">{{t "RegistrationUser.EmailLabel"}}</label>
-            <input class="lgn-input" type="email" id="email" name="email" autocomplete="email" value="{{ .Email }}" required>
+            <input class="lgn-input" type="email" id="email" name="email" autocomplete="email" value="{{ .Email }}" autofocus required>
         </div>
 
         {{if .ShowUsername}}
@@ -36,6 +36,12 @@
             </div>
         </div>
         {{end}}
+
+        <div class="lgn-field double">
+            <label class="lgn-label" for="firstname">{{t "RegistrationUser.FirstnameLabel"}}</label>
+            <input class="lgn-input" type="text" id="firstname" name="firstname" autocomplete="given-name"
+                value="{{ .Firstname }}" required>
+        </div>
 
         <div class="double-col">
             <div class="lgn-field">

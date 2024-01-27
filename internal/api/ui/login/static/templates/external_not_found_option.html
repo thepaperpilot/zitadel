@@ -38,6 +38,11 @@
 
         <div class="double-col">
             <div class="lgn-field">
+                <label class="lgn-label" for="firstname">{{t "ExternalRegistrationUserOverview.FirstnameLabel"}}</label>
+                <input class="lgn-input" type="text" id="firstname" name="firstname" autocomplete="given-name"
+                       value="{{ .Firstname }}" autofocus required>
+            </div>
+            <div class="lgn-field">
                 <label class="lgn-label" for="languages">{{t "ExternalRegistrationUserOverview.LanguageLabel"}}</label>
                 <select id="languages" name="language">
                     <option value=""></option>
