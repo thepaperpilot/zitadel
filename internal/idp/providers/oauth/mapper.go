@@ -51,37 +51,40 @@ func (u *UserMapper) GetID() string {
 
 // GetFirstName is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetFirstName() string {
-	return ""
+	if u.RawInfo["global_name"] != nil {
+		return u.RawInfo["global_name"].(string)
+	}
+	return u.RawInfo["username"].(string)
 }
 
 // GetLastName is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetLastName() string {
-	return ""
+	return u.GetFirstName()
 }
 
 // GetDisplayName is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetDisplayName() string {
-	return ""
+	return u.GetFirstName()
 }
 
 // GetNickname is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetNickname() string {
-	return ""
+	return u.GetFirstName()
 }
 
 // GetPreferredUsername is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetPreferredUsername() string {
-	return ""
+	return u.RawInfo["username"].(string)
 }
 
 // GetEmail is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetEmail() domain.EmailAddress {
-	return ""
+	return domain.EmailAddress(u.RawInfo["email"].(string))
 }
 
 // IsEmailVerified is an implementation of the [idp.User] interface.
 func (u *UserMapper) IsEmailVerified() bool {
-	return false
+	return u.RawInfo["verified"] == true
 }
 
 // GetPhone is an implementation of the [idp.User] interface.
@@ -96,12 +99,18 @@ func (u *UserMapper) IsPhoneVerified() bool {
 
 // GetPreferredLanguage is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetPreferredLanguage() language.Tag {
-	return language.Und
+	if u.RawInfo["locale"] == nil {
+		return language.Und
+	}
+	return language.Make(u.RawInfo["locale"].(string))
 }
 
 // GetAvatarURL is an implementation of the [idp.User] interface.
 func (u *UserMapper) GetAvatarURL() string {
-	return ""
+	if u.RawInfo["avatar"] == nil {
+		return ""
+	}
+	return "https://cdn.discordapp.com/avatars/" + u.RawInfo["id"].(string) + "/" + u.RawInfo["avatar"].(string) + ".png"
 }
 
 // GetProfile is an implementation of the [idp.User] interface.
