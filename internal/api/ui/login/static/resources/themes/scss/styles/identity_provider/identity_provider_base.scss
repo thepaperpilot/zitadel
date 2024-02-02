@@ -90,3 +90,13 @@ $lgn-idp-logo-size: 46px;
     }
   }
 }
+
+.lgn-idp:not(.google):not(.github):not(.gitlab) .logo {
+  height: 46px;
+  width: 46px;
+  background-image: url(../../../images/idp/discord-mark-white.svg);
+  background-size: 60%;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 5px;
+}
