@@ -92,11 +92,7 @@ func (u *Human) EnsureDisplayName() {
 		return
 	}
 	if u.FirstName != "" && u.LastName != "" {
-		u.DisplayName = u.FirstName + " " + u.LastName
-		return
-	}
-	if u.Email != nil && strings.TrimSpace(string(u.Email.EmailAddress)) != "" {
-		u.DisplayName = string(u.Email.EmailAddress)
+		u.DisplayName = u.FirstName
 		return
 	}
 	u.DisplayName = u.Username
