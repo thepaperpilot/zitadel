@@ -25,5 +25,5 @@ func (p *Profile) IsValid() bool {
 }
 
 func (p *Profile) SetNamesAsDisplayname() {
-	p.DisplayName = p.FirstName + " " + p.LastName
+	p.DisplayName = p.FirstName
 }
