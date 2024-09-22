@@ -30,6 +30,14 @@
     </div>
     <div class="user-grid">
       <cnsl-form-field class="formfield">
+        <cnsl-label>{{ 'USER.PROFILE.FIRSTNAME' | translate }}</cnsl-label>
+        <input cnslInput formControlName="firstName" />
+      </cnsl-form-field>
+      <cnsl-form-field class="formfield">
+        <cnsl-label>{{ 'USER.PROFILE.LASTNAME' | translate }}</cnsl-label>
+        <input cnslInput formControlName="lastName" />
+      </cnsl-form-field>
+      <cnsl-form-field class="formfield">
         <cnsl-label>{{ 'USER.PROFILE.DISPLAYNAME' | translate }}</cnsl-label>
         <input cnslInput formControlName="displayName" />
       </cnsl-form-field>
