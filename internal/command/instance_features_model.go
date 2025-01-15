@@ -30,14 +30,29 @@ func (m *InstanceFeaturesWriteModel) Reduce() (err error) {
 		case *feature_v2.ResetEvent:
 			m.reduceReset()
 		case *feature_v1.SetEvent[feature_v1.Boolean]:
-			err = m.reduceBoolFeature(
-				feature_v1.DefaultLoginInstanceEventToV2(e),
+			reduceInstanceFeature(
+				&m.InstanceFeatures,
+				feature.KeyLoginDefaultOrg,
+				feature_v1.DefaultLoginInstanceEventToV2(e).Value,
 			)
 		case *feature_v2.SetEvent[bool]:
-			err = m.reduceBoolFeature(e)
-		}
-		if err != nil {
-			return err
+			_, key, err := e.FeatureInfo()
+			if err != nil {
+				return err
+			}
+			reduceInstanceFeature(&m.InstanceFeatures, key, e.Value)
+		case *feature_v2.SetEvent[*feature.LoginV2]:
+			_, key, err := e.FeatureInfo()
+			if err != nil {
+				return err
+			}
+			reduceInstanceFeature(&m.InstanceFeatures, key, e.Value)
+		case *feature_v2.SetEvent[[]feature.ImprovedPerformanceType]:
+			_, key, err := e.FeatureInfo()
+			if err != nil {
+				return err
+			}
+			reduceInstanceFeature(&m.InstanceFeatures, key, e.Value)
 		}
 	}
 	return m.WriteModel.Reduce()
@@ -57,41 +72,64 @@ func (m *InstanceFeaturesWriteModel) Query() *eventstore.SearchQueryBuilder {
 			feature_v2.InstanceUserSchemaEventType,
 			feature_v2.InstanceTokenExchangeEventType,
 			feature_v2.InstanceActionsEventType,
+			feature_v2.InstanceImprovedPerformanceEventType,
+			feature_v2.InstanceWebKeyEventType,
+			feature_v2.InstanceDebugOIDCParentErrorEventType,
+			feature_v2.InstanceOIDCSingleV1SessionTerminationEventType,
+			feature_v2.InstanceDisableUserTokenEvent,
+			feature_v2.InstanceEnableBackChannelLogout,
+			feature_v2.InstanceLoginVersion,
 		).
 		Builder().ResourceOwner(m.ResourceOwner)
 }
 
 func (m *InstanceFeaturesWriteModel) reduceReset() {
-	m.LoginDefaultOrg = nil
-	m.TriggerIntrospectionProjections = nil
-	m.LegacyIntrospection = nil
-	m.UserSchema = nil
-	m.TokenExchange = nil
-	m.Actions = nil
+	m.InstanceFeatures = InstanceFeatures{}
 }
 
-func (m *InstanceFeaturesWriteModel) reduceBoolFeature(event *feature_v2.SetEvent[bool]) error {
-	_, key, err := event.FeatureInfo()
-	if err != nil {
-		return err
-	}
+func reduceInstanceFeature(features *InstanceFeatures, key feature.Key, value any) {
 	switch key {
 	case feature.KeyUnspecified:
-		return nil
+		return
 	case feature.KeyLoginDefaultOrg:
-		m.LoginDefaultOrg = &event.Value
+		v := value.(bool)
+		features.LoginDefaultOrg = &v
 	case feature.KeyTriggerIntrospectionProjections:
-		m.TriggerIntrospectionProjections = &event.Value
+		v := value.(bool)
+		features.TriggerIntrospectionProjections = &v
 	case feature.KeyLegacyIntrospection:
-		m.LegacyIntrospection = &event.Value
+		v := value.(bool)
+		features.LegacyIntrospection = &v
 	case feature.KeyTokenExchange:
-		m.TokenExchange = &event.Value
+		v := value.(bool)
+		features.TokenExchange = &v
 	case feature.KeyUserSchema:
-		m.UserSchema = &event.Value
+		v := value.(bool)
+		features.UserSchema = &v
 	case feature.KeyActions:
-		m.Actions = &event.Value
+		v := value.(bool)
+		features.Actions = &v
+	case feature.KeyImprovedPerformance:
+		v := value.([]feature.ImprovedPerformanceType)
+		features.ImprovedPerformance = v
+	case feature.KeyWebKey:
+		v := value.(bool)
+		features.WebKey = &v
+	case feature.KeyDebugOIDCParentError:
+		v := value.(bool)
+		features.DebugOIDCParentError = &v
+	case feature.KeyOIDCSingleV1SessionTermination:
+		v := value.(bool)
+		features.OIDCSingleV1SessionTermination = &v
+	case feature.KeyDisableUserTokenEvent:
+		v := value.(bool)
+		features.DisableUserTokenEvent = &v
+	case feature.KeyEnableBackChannelLogout:
+		v := value.(bool)
+		features.EnableBackChannelLogout = &v
+	case feature.KeyLoginV2:
+		features.LoginV2 = value.(*feature.LoginV2)
 	}
-	return nil
 }
 
 func (wm *InstanceFeaturesWriteModel) setCommands(ctx context.Context, f *InstanceFeatures) []eventstore.Command {
@@ -103,5 +141,12 @@ func (wm *InstanceFeaturesWriteModel) setCommands(ctx context.Context, f *Instan
 	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.TokenExchange, f.TokenExchange, feature_v2.InstanceTokenExchangeEventType)
 	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.UserSchema, f.UserSchema, feature_v2.InstanceUserSchemaEventType)
 	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.Actions, f.Actions, feature_v2.InstanceActionsEventType)
+	cmds = appendFeatureSliceUpdate(ctx, cmds, aggregate, wm.ImprovedPerformance, f.ImprovedPerformance, feature_v2.InstanceImprovedPerformanceEventType)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.WebKey, f.WebKey, feature_v2.InstanceWebKeyEventType)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.DebugOIDCParentError, f.DebugOIDCParentError, feature_v2.InstanceDebugOIDCParentErrorEventType)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.OIDCSingleV1SessionTermination, f.OIDCSingleV1SessionTermination, feature_v2.InstanceOIDCSingleV1SessionTerminationEventType)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.DisableUserTokenEvent, f.DisableUserTokenEvent, feature_v2.InstanceDisableUserTokenEvent)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.EnableBackChannelLogout, f.EnableBackChannelLogout, feature_v2.InstanceEnableBackChannelLogout)
+	cmds = appendFeatureUpdate(ctx, cmds, aggregate, wm.LoginV2, f.LoginV2, feature_v2.InstanceLoginVersion)
 	return cmds
 }

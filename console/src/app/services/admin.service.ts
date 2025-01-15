@@ -72,6 +72,8 @@ import {
   GetCustomPasswordChangeMessageTextResponse,
   GetCustomPasswordlessRegistrationMessageTextRequest,
   GetCustomPasswordlessRegistrationMessageTextResponse,
+  GetCustomInviteUserMessageTextRequest,
+  GetCustomInviteUserMessageTextResponse,
   GetCustomPasswordResetMessageTextRequest,
   GetCustomPasswordResetMessageTextResponse,
   GetCustomVerifyEmailMessageTextRequest,
@@ -90,10 +92,14 @@ import {
   GetDefaultLanguageResponse,
   GetDefaultLoginTextsRequest,
   GetDefaultLoginTextsResponse,
+  GetDefaultOrgRequest,
+  GetDefaultOrgResponse,
   GetDefaultPasswordChangeMessageTextRequest,
   GetDefaultPasswordChangeMessageTextResponse,
   GetDefaultPasswordlessRegistrationMessageTextRequest,
   GetDefaultPasswordlessRegistrationMessageTextResponse,
+  GetDefaultInviteUserMessageTextRequest,
+  GetDefaultInviteUserMessageTextResponse,
   GetDefaultPasswordResetMessageTextRequest,
   GetDefaultPasswordResetMessageTextResponse,
   GetDefaultVerifyEmailMessageTextRequest,
@@ -222,6 +228,8 @@ import {
   SetDefaultPasswordChangeMessageTextResponse,
   SetDefaultPasswordlessRegistrationMessageTextRequest,
   SetDefaultPasswordlessRegistrationMessageTextResponse,
+  SetDefaultInviteUserMessageTextRequest,
+  SetDefaultInviteUserMessageTextResponse,
   SetDefaultPasswordResetMessageTextRequest,
   SetDefaultPasswordResetMessageTextResponse,
   SetDefaultVerifyEmailMessageTextRequest,
@@ -238,6 +246,10 @@ import {
   SetSecurityPolicyResponse,
   SetUpOrgRequest,
   SetUpOrgResponse,
+  TestSMTPConfigByIdRequest,
+  TestSMTPConfigByIdResponse,
+  TestSMTPConfigRequest,
+  TestSMTPConfigResponse,
   UpdateAppleProviderRequest,
   UpdateAppleProviderResponse,
   UpdateAzureADProviderRequest,
@@ -305,6 +317,8 @@ import {
   ResetCustomPasswordChangeMessageTextToDefaultResponse,
   ResetCustomPasswordlessRegistrationMessageTextToDefaultRequest,
   ResetCustomPasswordlessRegistrationMessageTextToDefaultResponse,
+  ResetCustomInviteUserMessageTextToDefaultRequest,
+  ResetCustomInviteUserMessageTextToDefaultResponse,
   ResetCustomPasswordResetMessageTextToDefaultRequest,
   ResetCustomPasswordResetMessageTextToDefaultResponse,
   ResetCustomVerifyEmailMessageTextToDefaultRequest,
@@ -328,6 +342,7 @@ import {
 } from '../proto/generated/zitadel/milestone/v1/milestone_pb';
 import { OrgFieldName, OrgQuery } from '../proto/generated/zitadel/org_pb';
 import { SortDirection } from '@angular/material/sort';
+import { SMTPConfig } from '../proto/generated/zitadel/settings_pb';
 
 export interface OnboardingActions {
   order: number;
@@ -427,6 +442,11 @@ export class AdminService {
 
     this.hideOnboarding =
       this.storageService.getItem('onboarding-dismissed', StorageLocation.local) === 'true' ? true : false;
+  }
+
+  public getDefaultOrg(): Promise<GetDefaultOrgResponse.AsObject> {
+    const req = new GetDefaultOrgRequest();
+    return this.grpcService.admin.getDefaultOrg(req, null).then((resp) => resp.toObject());
   }
 
   public setDefaultOrg(orgId: string): Promise<SetDefaultOrgResponse.AsObject> {
@@ -710,6 +730,32 @@ export class AdminService {
     return this.grpcService.admin.resetCustomPasswordChangeMessageTextToDefault(req, null).then((resp) => resp.toObject());
   }
 
+  public getDefaultInviteUserMessageText(
+    req: GetDefaultInviteUserMessageTextRequest,
+  ): Promise<GetDefaultInviteUserMessageTextResponse.AsObject> {
+    return this.grpcService.admin.getDefaultInviteUserMessageText(req, null).then((resp) => resp.toObject());
+  }
+
+  public getCustomInviteUserMessageText(
+    req: GetCustomInviteUserMessageTextRequest,
+  ): Promise<GetCustomInviteUserMessageTextResponse.AsObject> {
+    return this.grpcService.admin.getCustomInviteUserMessageText(req, null).then((resp) => resp.toObject());
+  }
+
+  public setDefaultInviteUserMessageText(
+    req: SetDefaultInviteUserMessageTextRequest,
+  ): Promise<SetDefaultInviteUserMessageTextResponse.AsObject> {
+    return this.grpcService.admin.setDefaultInviteUserMessageText(req, null).then((resp) => resp.toObject());
+  }
+
+  public resetCustomInviteUserMessageTextToDefault(
+    lang: string,
+  ): Promise<ResetCustomInviteUserMessageTextToDefaultResponse.AsObject> {
+    const req = new ResetCustomInviteUserMessageTextToDefaultRequest();
+    req.setLanguage(lang);
+    return this.grpcService.admin.resetCustomInviteUserMessageTextToDefault(req, null).then((resp) => resp.toObject());
+  }
+
   public SetUpOrg(org: SetUpOrgRequest.Org, human: SetUpOrgRequest.Human): Promise<SetUpOrgResponse.AsObject> {
     const req = new SetUpOrgRequest();
 
@@ -937,6 +983,14 @@ export class AdminService {
     const req = new DeactivateSMTPConfigRequest();
     req.setId(id);
     return this.grpcService.admin.deactivateSMTPConfig(req, null).then((resp) => resp.toObject());
+  }
+
+  public testSMTPConfigById(req: TestSMTPConfigByIdRequest): Promise<TestSMTPConfigByIdResponse.AsObject> {
+    return this.grpcService.admin.testSMTPConfigById(req, null).then((resp) => resp.toObject());
+  }
+
+  public testSMTPConfig(req: TestSMTPConfigRequest): Promise<TestSMTPConfigResponse.AsObject> {
+    return this.grpcService.admin.testSMTPConfig(req, null).then((resp) => resp.toObject());
   }
 
   public removeSMTPConfig(id: string): Promise<RemoveSMTPConfigResponse.AsObject> {

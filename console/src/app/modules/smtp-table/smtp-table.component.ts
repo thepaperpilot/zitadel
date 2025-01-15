@@ -16,6 +16,7 @@ import { SMTPConfig } from 'src/app/proto/generated/zitadel/settings_pb';
 import { WarnDialogComponent } from '../warn-dialog/warn-dialog.component';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
+import { SmtpTestDialogComponent } from '../smtp-test-dialog/smtp-test-dialog.component';
 
 @Component({
   selector: 'cnsl-smtp-table',
@@ -149,6 +150,21 @@ export class SMTPTableComponent implements OnInit {
     });
   }
 
+  public testSMTPConfig(id: string): void {
+    this.dialog.open(SmtpTestDialogComponent, {
+      data: {
+        id: id,
+        confirmKey: 'ACTIONS.TEST',
+        cancelKey: 'ACTIONS.CLOSE',
+        titleKey: 'SMTP.LIST.DIALOG.TEST_TITLE',
+        descriptionKey: 'SMTP.LIST.DIALOG.TEST_DESCRIPTION',
+        emailKey: 'SMTP.LIST.DIALOG.TEST_EMAIL',
+        testResultKey: 'SMTP.LIST.DIALOG.TEST_RESULT',
+      },
+      width: '500px',
+    });
+  }
+
   private async getData(limit: number, offset: number): Promise<void> {
     this.loadingSubject.next(true);
 
@@ -189,6 +205,9 @@ export class SMTPTableComponent implements OnInit {
   }
 
   public navigateToProvider(row: SMTPConfig.AsObject) {
+    if (!row.senderAddress) {
+      return;
+    }
     this.router.navigate(this.routerLinkForRow(row));
   }
 }

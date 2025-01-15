@@ -1,6 +1,12 @@
 import { Component, Injector, Type } from '@angular/core';
 import { Location } from '@angular/common';
-import { AutoLinkingOption, Options, Provider, SAMLBinding } from '../../../proto/generated/zitadel/idp_pb';
+import {
+  AutoLinkingOption,
+  Options,
+  Provider,
+  SAMLBinding,
+  SAMLNameIDFormat,
+} from '../../../proto/generated/zitadel/idp_pb';
 import { AbstractControl, FormGroup, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { PolicyComponentServiceType } from '../../policies/policy-component-types.enum';
 import { ManagementService } from '../../../services/mgmt.service';
@@ -46,6 +52,7 @@ export class ProviderSamlSpComponent {
   // DEPRECATED: use service$ instead
   private service!: ManagementService | AdminService;
   bindingValues: string[] = Object.keys(SAMLBinding);
+  nameIDFormatValues: string[] = Object.keys(SAMLNameIDFormat);
 
   public justCreated$: BehaviorSubject<string> = new BehaviorSubject<string>('');
   public justActivated$ = new BehaviorSubject<boolean>(false);
@@ -118,6 +125,8 @@ export class ProviderSamlSpComponent {
         metadataUrl: new UntypedFormControl('', []),
         binding: new UntypedFormControl(this.bindingValues[0], [requiredValidator]),
         withSignedRequest: new UntypedFormControl(true, [requiredValidator]),
+        nameIdFormat: new UntypedFormControl(SAMLNameIDFormat.SAML_NAME_ID_FORMAT_PERSISTENT, []),
+        transientMappingAttributeName: new UntypedFormControl('', []),
       },
       atLeastOneIsFilled('metadataXml', 'metadataUrl'),
     );
@@ -189,13 +198,18 @@ export class ProviderSamlSpComponent {
       req.setId(this.provider?.id || this.justCreated$.value);
       req.setName(this.name?.value);
       if (this.metadataXml?.value) {
+        req.setMetadataUrl('');
         req.setMetadataXml(this.metadataXml?.value);
       } else {
+        req.setMetadataXml('');
         req.setMetadataUrl(this.metadataUrl?.value);
       }
       req.setWithSignedRequest(this.withSignedRequest?.value);
       // @ts-ignore
       req.setBinding(SAMLBinding[this.binding?.value]);
+      // @ts-ignore
+      req.setNameIdFormat(SAMLNameIDFormat[this.nameIDFormat?.value]);
+      req.setTransientMappingAttributeName(this.transientMapping?.value);
       req.setProviderOptions(this.options);
 
       this.loading = true;
@@ -221,14 +235,21 @@ export class ProviderSamlSpComponent {
         : new AdminAddSAMLProviderRequest();
     req.setName(this.name?.value);
     if (this.metadataXml?.value) {
+      req.setMetadataUrl('');
       req.setMetadataXml(this.metadataXml?.value);
     } else {
+      req.setMetadataXml('');
       req.setMetadataUrl(this.metadataUrl?.value);
     }
     req.setProviderOptions(this.options);
     // @ts-ignore
     req.setBinding(SAMLBinding[this.binding?.value]);
     req.setWithSignedRequest(this.withSignedRequest?.value);
+    if (this.nameIDFormat) {
+      // @ts-ignore
+      req.setNameIdFormat(SAMLNameIDFormat[this.nameIDFormat.value]);
+    }
+    req.setTransientMappingAttributeName(this.transientMapping?.value);
     this.loading = true;
     this.service
       .addSAMLProvider(req)
@@ -279,6 +300,14 @@ export class ProviderSamlSpComponent {
     return false;
   }
 
+  compareNameIDFormat(value: string, index: number) {
+    console.log(value, index);
+    if (value) {
+      return value === Object.keys(SAMLNameIDFormat)[index];
+    }
+    return false;
+  }
+
   private get name(): AbstractControl | null {
     return this.form.get('name');
   }
@@ -297,5 +326,13 @@ export class ProviderSamlSpComponent {
 
   private get withSignedRequest(): AbstractControl | null {
     return this.form.get('withSignedRequest');
+  }
+
+  private get nameIDFormat(): AbstractControl | null {
+    return this.form.get('nameIdFormat');
+  }
+
+  private get transientMapping(): AbstractControl | null {
+    return this.form.get('transientMappingAttributeName');
   }
 }

@@ -48,13 +48,13 @@
       "TITLE": "Usuarios",
       "DESCRIPTION": "Un usuario es un humano o una máquina que puede acceder a tus aplicaciones.",
       "HUMANS": {
-        "TITLE": "Humanos",
-        "DESCRIPTION": "Los humanos se autentican de manera interactiva en una sesión de navegador con una solicitud de inicio de sesión.",
+        "TITLE": "Usuarios",
+        "DESCRIPTION": "Los Usuarios se autentican de manera interactiva en una sesión de navegador con una solicitud de inicio de sesión.",
         "METADATA": "Añade atributos personalizados al usuario como el departamento. Puedes usar esta información en tus acciones."
       },
       "MACHINES": {
-        "TITLE": "Máquinas",
-        "DESCRIPTION": "Las máquinas se autentican de manera no interactiva usando un token portador JWT firmado con una clave privada. También pueden usar un token de acceso personal.",
+        "TITLE": "Usuarios del servicio",
+        "DESCRIPTION": "Los Usuarios del servicio se autentican de manera no interactiva usando un token portador JWT firmado con una clave privada. También pueden usar un token de acceso personal.",
         "METADATA": "Añade atributos personalizados al usuario como el sistema autenticador. Puedes usar esta información en tus acciones."
       },
       "SELF": {
@@ -79,8 +79,8 @@
     },
     "SETTINGS": {
       "INSTANCE": {
-        "TITLE": "Configuración de la Instancia",
-        "DESCRIPTION": "Las configuraciones de la instancia son las configuraciones predeterminadas para todas las organizaciones. Con los permisos adecuados, algunas de ellas pueden ser sobrescritas en la configuración de la organización."
+        "TITLE": "Configuración por defecto",
+        "DESCRIPTION": "Configuraciones predeterminadas para todas las organizaciones. Con los permisos adecuados, algunas de ellas se pueden anular en la configuración de la organización."
       },
       "ORG": {
         "TITLE": "Configuración de la Organización",
@@ -129,7 +129,7 @@
       },
       "PRIVACY_POLICY": {
         "TITLE": "Enlaces Externos",
-        "DESCRIPTION": "Guía a tus usuarios hacia recursos externos personalizados mostrados en la página de inicio de sesión. Los usuarios necesitan aceptar los Términos de Servicio y la Política de Privacidad antes de que puedan registrarse."
+        "DESCRIPTION": "Guía a tus usuarios a recursos externos personalizados que se muestran en la página de inicio de sesión. Los usuarios deben aceptar los Términos de servicio y la Política de privacidad antes de poder registrarse. Cambia el enlace a tu documentación o introduce una cadena de texto vacía para ocultar el botón de documentación de la consola. Agrega un enlace externo personalizado y un texto personalizado para dicho enlace en la consola, o déjalos vacíos para ocultar ese botón."
       },
       "SMTP_PROVIDER": {
         "TITLE": "Configuración de SMTP",
@@ -197,7 +197,8 @@
           "VE": "Cuando un usuario cambia su dirección de correo electrónico, recibirá un correo electrónico con un enlace para verificar la nueva dirección.",
           "VP": "Cuando un usuario cambia su número de teléfono, recibirá un SMS con un código para verificar el nuevo número.",
           "VEO": "Cuando un usuario agrega una Contraseña de Un Solo Uso mediante correo electrónico, necesita activarla ingresando un código enviado a su dirección de correo electrónico.",
-          "VSO": "Cuando un usuario agrega una Contraseña de Un Solo Uso mediante SMS, necesita activarla ingresando un código enviado a su número de teléfono."
+          "VSO": "Cuando un usuario agrega una Contraseña de Un Solo Uso mediante SMS, necesita activarla ingresando un código enviado a su número de teléfono.",
+          "IU": "Cuando se crea un código de invitación de usuario, recibirán un correo electrónico con un enlace para configurar su método de autenticación."
         }
       },
       "LOGIN_TEXTS": {
@@ -231,7 +232,7 @@
           "LABEL": "Duración Máxima en horas",
           "PW_CHECK": {
             "TITLE": "Verificación de Contraseña",
-            "DESCRIPTION": "Tus usuarios tienen que cambiar sus contraseñas en estos períodos."
+            "DESCRIPTION": "Los usuarios deberán volver a autenticarse con su contraseña después de este período."
           },
           "EXT_LOGIN_CHECK": {
             "TITLE": "Verificación de Inicio de Sesión Externo",
@@ -269,9 +270,9 @@
             "TITLE": "Permitido Inicio de Sesión Externo",
             "DESCRIPTION": "Permite a tus usuarios iniciar sesión con un proveedor de identidad externo en lugar de usar el usuario de ZITADEL para iniciar sesión."
           },
-          "PASSWORD_RESET_ALLOWED": {
-            "TITLE": "Permitido Restablecimiento de Contraseña",
-            "DESCRIPTION": "Permite a tus usuarios restablecer su contraseña."
+          "HIDE_PASSWORD_RESET": {
+            "TITLE": "Restablecimiento de contraseña oculto",
+            "DESCRIPTION": "No permita que sus usuarios restablezcan su contraseña."
           },
           "DOMAIN_DISCOVERY_ALLOWED": {
             "TITLE": "Permitido Descubrimiento de Dominio",
@@ -486,6 +487,7 @@
     "MORE": "más",
     "STEP": "Paso",
     "SETUP": "Configurar",
+    "TEST": "Probar",
     "UNSAVEDCHANGES": "Cambios no guardados",
     "UNSAVED": {
       "DIALOG": {
@@ -497,7 +499,8 @@
     "TABLE": {
       "SHOWUSER": "Mostrar usuario {{value}}"
     },
-    "DOWNLOAD": "Descargar"
+    "DOWNLOAD": "Descargar",
+    "APPLY": "Aplicar"
   },
   "MEMBERROLES": {
     "IAM_OWNER": "Tiene control sobre toda la instancia, incluyendo todas las organizaciones",
@@ -595,6 +598,7 @@
     "INVALID_FORMAT": "El formato no es valido.",
     "NOTANEMAIL": "El valor proporcionado no es una dirección de email.",
     "MINLENGTH": "Debe tener al menos {{requiredLength}} caracteres de longitud.",
+    "MAXLENGTH": "Debe tener menos de {{requiredLength}} caracteres.",
     "UPPERCASEMISSING": "Debe incluir un carácter en mayúscula.",
     "LOWERCASEMISSING": "Debe incluir un carácter en minúscula.",
     "SYMBOLERROR": "Debe incluir un símbolo o un signo de puntuación.",
@@ -880,7 +884,8 @@
       "SET": "Establecer nueva contraseña",
       "RESENDNOTIFICATION": "Enviar enlace para restablecer la contraseña",
       "REQUIRED": "Faltan algunos campos requeridos.",
-      "MINLENGTHERROR": "Debe tener al menos {{value}} caracteres de longitud."
+      "MINLENGTHERROR": "Debe tener al menos {{value}} caracteres de longitud.",
+      "MAXLENGTHERROR": "Debe tener menos de {{value}} caracteres"
     },
     "ID": "ID",
     "EMAIL": "Email",
@@ -1082,7 +1087,8 @@
       "REMOVEACTIONSLIST": {
         "TITLE": "¿Borrar acciones seleccionadas?",
         "DESCRIPTION": "¿Estás seguro que quieres borrar las acciones seleccionadas del flujo?"
-      }
+      },
+      "ABOUTNAME": "El nombre de la acción y el nombre de la función en javascript tienen que ser el mismo"
     },
     "TOAST": {
       "ACTIONSSET": "Acciones establecidas",
@@ -1293,6 +1299,7 @@
       "MEMBERCHANGED": "Mánager modificado.",
       "SETPRIMARY": "Dominio primario establecido.",
       "DELETED": "Organización borrada con éxito",
+      "DEFAULTORGNOTFOUND": "No se encontró la organización por defecto",
       "ORG_WAS_DELETED": "La organización ha sido borrada."
     },
     "DIALOG": {
@@ -1314,16 +1321,13 @@
     }
   },
   "SETTINGS": {
-    "INSTANCE": {
-      "TITLE": "Ajustes de instancia",
-      "DESCRIPTION": "Estos ajustes se aplicará a todas tus organizaciones a menos que éstas los sobrescriban."
-    },
     "LIST": {
       "ORGS": "Organizaciones",
       "FEATURESETTINGS": "Ajustes de funcionalidades",
       "LANGUAGES": "Idiomas",
       "LOGIN": "Comportamiento del inicio de sesión y de la seguridad",
       "LOCKOUT": "Bloqueo",
+      "AGE": "Caducidad de la contraseña",
       "COMPLEXITY": "Complejidad de contraseña",
       "NOTIFICATIONS": "Ajustes de notificación",
       "SMTP_PROVIDER": "Proveedor SMTP",
@@ -1378,7 +1382,11 @@
         "mk": "Македонски",
         "cs": "Čeština",
         "ru": "Русский",
-        "nl": "Nederlands"
+        "nl": "Nederlands",
+        "sv": "Svenska",
+        "id": "Bahasa Indonesia",
+        "hu": "Magyar",
+        "ko": "한국어"
       }
     },
     "SMTP": {
@@ -1415,6 +1423,8 @@
         "SID": "Sid",
         "TOKEN": "Token",
         "SENDERNUMBER": "Número de emisor",
+        "VERIFYSERVICESID": "SID del servicio de verificación",
+        "VERIFYSERVICESID_DESCRIPTION": "Establecer un SID del servicio de verificación permite usar el servicio Twilio Verify en lugar del servicio de mensajes para la verificación de números de teléfono y SMS OTP.",
         "ADDED": "Twilio añadido con éxito.",
         "UPDATED": "Twilio actualizado con éxito",
         "REMOVED": "Twilio eliminado",
@@ -1435,9 +1445,7 @@
         "7": "One Time Password (OTP) - SMS",
         "8": "One Time Password (OTP) - email"
       },
-      "ADDGENERATOR": "Configurar generador del secreto",
-      "GENERATORTYPE": "Tipo",
-      "EXPIRY": "Caducidad (en horas)",
+      "EXPIRY": "Caducidad (en minutos)",
       "INCLUDEDIGITS": "Incluir números",
       "INCLUDESYMBOLS": "Incluir símbolos",
       "INCLUDELOWERLETTERS": "Incluir letras minúsculas",
@@ -1467,12 +1475,18 @@
       "USERSCHEMA_DESCRIPTION": "Los esquemas de usuario permiten gestionar los esquemas de datos de los usuarios. Si se activa la bandera, podrás utilizar la nueva API y sus funciones.",
       "ACTIONS": "Acciones",
       "ACTIONS_DESCRIPTION": "Acciones v2 permite administrar las ejecuciones y objetivos de datos. Si la bandera está habilitada, podrá utilizar la nueva API y sus funciones.",
+      "OIDCSINGLEV1SESSIONTERMINATION": "OIDC Single V1 Terminación de sesión",
+      "OIDCSINGLEV1SESSIONTERMINATION_DESCRIPTION": "Si la bandera está habilitada, podrá terminar una sesión única desde la interfaz de usuario de inicio de sesión proporcionando un id_token con una reclamación `sid` como id_token_hint en el punto final de end_session. Tenga en cuenta que actualmente se terminan todas las sesiones del mismo agente de usuario (navegador) en la interfaz de usuario de inicio de sesión. Las sesiones administradas a través de la API de sesión ya permiten la terminación de sesiones individuales.",
       "STATES": {
         "INHERITED": "Heredado",
         "ENABLED": "Habilitado",
         "DISABLED": "Deshabilitado"
       },
       "INHERITED_DESCRIPTION": "Esta configuración establece el valor al valor predeterminado del sistema.",
+      "INHERITEDINDICATOR_DESCRIPTION": {
+        "ENABLED": "\"Habilitado\" se hereda",
+        "DISABLED": "\"Deshabilitado\" se hereda"
+      },
       "RESET": "Establecer todo a heredado"
     },
     "DIALOG": {
@@ -1543,8 +1557,8 @@
       }
     },
     "PWD_AGE": {
-      "TITLE": "Antigüedad de la contraseña",
-      "DESCRIPTION": "Puedes establecer una política para la antigüedad de las contraseñas. Esta política emite un aviso después de que la antigüedad máxima se haya superado."
+      "TITLE": "Caducidad de la contraseña",
+      "DESCRIPTION": "Puedes establecer una política para la caducidad de las contraseñas. Esta política obligará al usuario a cambiar la contraseña en el próximo inicio de sesión después de la caducidad. No hay avisos ni notificaciones automáticos."
     },
     "PWD_LOCKOUT": {
       "TITLE": "Política de bloqueo",
@@ -1571,6 +1585,9 @@
       "POLICYLINK": "Enlace a Política de privacidad",
       "HELPLINK": "Enlace de ayuda",
       "SUPPORTEMAIL": "Email de soporte",
+      "DOCSLINK": "Enlace de documentos (Console)",
+      "CUSTOMLINK": "Enlace personalizado (Console)",
+      "CUSTOMLINKTEXT": "Texto de enlace personalizado (Console)",
       "SAVED": "¡Se guardó con éxito!",
       "RESET_TITLE": "Restaurar valores por defecto",
       "RESET_DESCRIPTION": "Estás a punto de restaurar los enlaces por defecto para los TDS y la política de privacida. ¿Quieres continuar?"
@@ -1604,7 +1621,10 @@
         "mk": "Македонски",
         "cs": "Čeština",
         "ru": "Русский",
-        "nl": "Nederlands"
+        "nl": "Nederlands",
+        "sv": "Svenska",
+        "id": "Bahasa Indonesia",
+        "ko": "한국어"
       },
       "KEYS": {
         "emailVerificationDoneText": "Verificación de email realizada",
@@ -1619,7 +1639,6 @@
         "initPasswordText": "Inicializar contraseña",
         "initializeDoneText": "Inicializar usuario, hecho",
         "initializeUserText": "Inicializar usuario",
-        "linkingUserPromptText": "Mensaje de enlace de usuario",
         "linkingUserDoneText": "Vinculación de usuario, hecho",
         "loginText": "Iniciar sesión",
         "logoutText": "Cerrar sesión",
@@ -1655,7 +1674,8 @@
         "PR": "Restablecimiento de contraseña",
         "DC": "Reclamar un dominio",
         "PL": "Acceso sin contraseña",
-        "PC": "Cambio de contraseña"
+        "PC": "Cambio de contraseña",
+        "IU": "Invitar usuario"
       },
       "CHIPS": {
         "firstname": "Nombre",
@@ -1674,7 +1694,9 @@
         "username": "Nombre de usuario",
         "tempUsername": "Nombre de usuario temporal",
         "otp": "Contraseña de un solo uso",
-        "verifyUrl": "URL para verificar la contraseña de un solo uso"
+        "verifyUrl": "URL para verificar la contraseña de un solo uso",
+        "expiry": "Expiración",
+        "applicationName": "Nombre de la aplicación"
       },
       "TOAST": {
         "UPDATED": "Textos personalizados guardados."
@@ -1693,8 +1715,8 @@
       "SHOWLOCKOUTFAILURES": "mostrar fallos de bloqueo",
       "MAXPASSWORDATTEMPTS": "Intentos máximos de contraseña",
       "MAXOTPATTEMPTS": "Intentos máximos de OTP",
-      "EXPIREWARNDAYS": "Aviso de expiración después de estos días: ",
-      "MAXAGEDAYS": "Antigüedad máxima en días",
+      "EXPIREWARNDAYS": "Aviso de caducidad después de días",
+      "MAXAGEDAYS": "Validez máxima en días",
       "USERLOGINMUSTBEDOMAIN": "Añadir el dominio de la organización como sufijo de los nombres de inicio de sesión",
       "USERLOGINMUSTBEDOMAIN_DESCRIPTION": "Si activas esta opción, todos los nombres de inicio de sesión tendrán como sufijo el dominio de esta organización. Si esta opción está desactivada, tendrás que asegurarte de que los nombres de usuario son únicos para todas las organizaciones.",
       "VALIDATEORGDOMAINS": "Verificación de dominio de la organización requerida (desafío DNS o HTTP)",
@@ -1702,8 +1724,8 @@
       "ALLOWUSERNAMEPASSWORD_DESC": "El inicio de sesión convencional con nombre de usuario y contraseña está permitido.",
       "ALLOWEXTERNALIDP_DESC": "El inicio de sesión está permitido para los proveedores de identidad subyacentes",
       "ALLOWREGISTER_DESC": "Si esta opción es seleccionada, aparece un paso adicional durante el inicio de sesión para registrar un usuario.",
-      "FORCEMFA": "Forzar MFA",
-      "FORCEMFALOCALONLY": "Forzar MFA para usuarios locales",
+      "FORCEMFA": "Forzar MFA para todos los usuarios",
+      "FORCEMFALOCALONLY": "Forzar MFA solo para usuarios autenticados localmente",
       "FORCEMFALOCALONLY_DESC": "Si esta opción es seleccionada, los usuarios autenticados localmente tendrán que configurar un doble factor para iniciar sesión",
       "HIDEPASSWORDRESET_DESC": "Si esta opción es seleccionada, el usuario no podrá restablecer su contraseña en el proceso de inicio de sesión.",
       "HIDELOGINNAMESUFFIX": "Ocultar sufijo del nombre de inicio de sesión",
@@ -1772,7 +1794,7 @@
       "TYPE": {
         "OWNED": "Proyectos propios",
         "OWNED_SINGULAR": "Proyecto propio",
-        "GRANTED_SINGULAR": "Proyecto concedido"
+        "GRANTED_SINGULAR": "Proyecto asignado {{name}}"
       },
       "PRIVATELABEL": {
         "TITLE": "Ajustes de imagen de marca",
@@ -2048,10 +2070,10 @@
       "ISAUTOCREATION_DESC": "Si se selecciona, una cuenta se creará si aún no existiera.",
       "ISAUTOUPDATE": "Actualización automática",
       "ISAUTOUPDATE_DESC": "Si se selecciona, las cuentas se actualizarán en la reautenticación.",
-      "ISCREATIONALLOWED": "Creación de cuentas permitida",
-      "ISCREATIONALLOWED_DESC": "Determina si se pueden crear cuentas.",
-      "ISLINKINGALLOWED": "Permitida la vinculación de cuentas",
-      "ISLINKINGALLOWED_DESC": "Determina si una identidad puede vincularse a una cuenta existente.",
+      "ISCREATIONALLOWED": "Creación de cuenta permitida (manualmente)",
+      "ISCREATIONALLOWED_DESC": "Determina si las cuentas se pueden crear usando una cuenta externa. Deshabilita si los usuarios no deberían poder editar la información de la cuenta cuando la creación automática está habilitada.",
+      "ISLINKINGALLOWED": "Enlace de cuenta permitido (manualmente)",
+      "ISLINKINGALLOWED_DESC": "Determina si una identidad se puede vincular manualmente a una cuenta existente. Deshabilita si los usuarios solo deberían poder vincular la cuenta propuesta en caso de vinculación automática activa.",
       "AUTOLINKING_DESC": "Determina si se pedirá a una identidad que se vincule a una cuenta existente.",
       "AUTOLINKINGTYPE": {
         "0": "Desactivado",
@@ -2221,11 +2243,12 @@
   "SMTP": {
     "LIST": {
       "TITLE": "Proveedor SMTP",
-      "DESCRIPTION": "Estos son los proveedores SMTP para tu instancia de Zitadel. Activa el que quieras utilizar para enviar notificaciones a tus usuarios.",
+      "DESCRIPTION": "Estos son los proveedores SMTP para tu instancia de ZITADEL. Activa el que quieras utilizar para enviar notificaciones a tus usuarios.",
       "EMPTY": "No hay ningún proveedor SMTP disponible",
       "ACTIVATED": "Activado",
       "ACTIVATE": "Activar proveedor",
       "DEACTIVATE": "Desactivar proveedor",
+      "TEST": "Prueba tu proveedor",
       "TYPE": "Tipo",
       "DIALOG": {
         "ACTIVATED": "Tu configuración SMTP ha sido activada",
@@ -2249,7 +2272,21 @@
         "CURRENT_DESC_TITLE": "Estas son tus configuraciones SMTP",
         "PROVIDER_SETTINGS": "Configuración del proveedor SMTP",
         "SENDER_SETTINGS": "Configuración del remitente",
-        "TEST_SETTINGS": "Probar la configuración SMTP"
+        "NEXT_STEPS": "Pŕoximos pasos",
+        "ACTIVATE": {
+          "TITLE": "Activa tu proveedor SMTP",
+          "DESCRIPTION": "ZITADEL no puede usar este proveedor SMTP para enviar notificaciones hasta que lo actives. Si activas este proveedor cualquier otro proveedor que estuviera activado será desactivado ahora."
+        },
+        "DEACTIVATE": {
+          "TITLE": "Desactiva tu proveedor SMTP",
+          "DESCRIPTION": "Si desactivas este proveedor SMTP, ZITADEL no puede utilizarlo para enviar notificationes hasta que lo actives otra vez."
+        },
+        "SAVE_SETTINGS": "Guarda tu configuración",
+        "TEST": {
+          "TITLE": "Prueba tu configuración",
+          "DESCRIPTION": "Puedes probar tu configuración SMTP y revisar el resultado de la prueba antes de guardar la configuración",
+          "RESULT": "Tu email fue enviado con éxito"
+        }
       }
     },
     "DETAIL": {
@@ -2501,6 +2538,10 @@
       "CLIENTSECRETREGENERATED": "secreto del cliente generado.",
       "DELETED": "App borrada.",
       "CONFIGCHANGED": "¡Cambios detectados!"
+    },
+    "LOGINV2": {
+      "USEV2": "Usar la nueva interfaz de usuario de inicio de sesión",
+      "BASEURL": "URL base personalizada para la nueva interfaz de usuario de inicio de sesión"
     }
   },
   "GENDERS": {
@@ -2523,7 +2564,10 @@
     "mk": "Македонски",
     "cs": "Čeština",
     "ru": "Русский",
-    "nl": "Nederlands"
+    "nl": "Nederlands",
+    "sv": "Svenska",
+    "id": "Bahasa Indonesia",
+    "ko": "한국어"
   },
   "MEMBER": {
     "ADD": "Añadir un Mánager",

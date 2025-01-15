@@ -48,13 +48,13 @@
       "TITLE": "Gebruikers",
       "DESCRIPTION": "Een gebruiker is een mens of een machine die toegang kan krijgen tot je applicaties.",
       "HUMANS": {
-        "TITLE": "Mensen",
-        "DESCRIPTION": "Mensen authenticeren interactief in een browsersessie met een loginprompt.",
+        "TITLE": "Gebruikers",
+        "DESCRIPTION": "Gebruikers authenticeren interactief in een browsersessie met een loginprompt.",
         "METADATA": "Voeg aangepaste attributen toe aan de gebruiker zoals de afdeling. Je kunt deze informatie gebruiken in je acties."
       },
       "MACHINES": {
-        "TITLE": "Machines",
-        "DESCRIPTION": "Machines authenticeren niet-interactief met een JWT bearer token ondertekend met een privésleutel. Ze kunnen ook een persoonlijke toegangstoken gebruiken.",
+        "TITLE": "Servicegebruikers",
+        "DESCRIPTION": "Servicegebruikers authenticeren niet-interactief met behulp van een JWT-bearertoken ondertekend met een privésleutel. Ze kunnen ook een persoonlijk toegangstoken gebruiken.",
         "METADATA": "Voeg aangepaste attributen toe aan de gebruiker zoals het authenticatiesysteem. Je kunt deze informatie gebruiken in je acties."
       },
       "SELF": {
@@ -79,8 +79,8 @@
     },
     "SETTINGS": {
       "INSTANCE": {
-        "TITLE": "Instellingsinstellingen",
-        "DESCRIPTION": "De instellingsinstellingen zijn de standaardinstellingen voor alle organisaties. Met de juiste toestemmingen kunnen sommige hiervan worden overschreven in organisatie-instellingen."
+        "TITLE": "Standaard instellingen",
+        "DESCRIPTION": "Standaardinstellingen voor alle organisaties. Met de juiste machtigingen kunnen sommige ervan worden overschreven in de organisatie-instellingen."
       },
       "ORG": {
         "TITLE": "Organisatie-instellingen",
@@ -129,7 +129,7 @@
       },
       "PRIVACY_POLICY": {
         "TITLE": "Externe links",
-        "DESCRIPTION": "Leid je gebruikers naar aangepaste externe bronnen die worden getoond op de inlogpagina. Gebruikers moeten de Algemene Voorwaarden en het Privacybeleid accepteren voordat ze zich kunnen aanmelden."
+        "DESCRIPTION": "Leid uw gebruikers naar aangepaste externe bronnen die op de inlogpagina worden weergegeven. Gebruikers moeten de Servicevoorwaarden en het Privacybeleid accepteren voordat ze zich kunnen aanmelden. Wijzig de link naar uw documentatie of stel een lege string in om de documentatieknop voor de console te verbergen. Voeg een aangepaste externe link en een aangepaste tekst voor die link toe in de console, of stel ze leeg om die knop te verbergen."
       },
       "SMTP_PROVIDER": {
         "TITLE": "SMTP-instellingen",
@@ -197,7 +197,8 @@
           "VE": "Wanneer een gebruiker zijn e-mailadres wijzigt, ontvangt hij een e-mail met een link om het nieuwe adres te verifiëren.",
           "VP": "Wanneer een gebruiker zijn telefoonnummer wijzigt, ontvangt hij een SMS met een code om het nieuwe nummer te verifiëren.",
           "VEO": "Wanneer een gebruiker een eenmalig wachtwoord via e-mailmethode toevoegt, moeten ze dit activeren door een code in te voeren die naar hun e-mailadres is verzonden.",
-          "VSO": "Wanneer een gebruiker een eenmalig wachtwoord via SMS-methode toevoegt, moeten ze dit activeren door een code in te voeren die naar hun telefoonnummer is verzonden."
+          "VSO": "Wanneer een gebruiker een eenmalig wachtwoord via SMS-methode toevoegt, moeten ze dit activeren door een code in te voeren die naar hun telefoonnummer is verzonden.",
+          "IU": "Wanneer een uitnodigingscode voor gebruikers wordt gemaakt, ontvangt de gebruiker een e-mail met een link om zijn verificatiemethode in te stellen."
         }
       },
       "LOGIN_TEXTS": {
@@ -231,7 +232,7 @@
           "LABEL": "Maximale Levensduur in uren",
           "PW_CHECK": {
             "TITLE": "Wachtwoord Controle",
-            "DESCRIPTION": "Je gebruikers moeten hun wachtwoorden in deze perioden wijzigen."
+            "DESCRIPTION": "Gebruikers moeten na deze periode opnieuw worden geverifieerd met hun wachtwoord."
           },
           "EXT_LOGIN_CHECK": {
             "TITLE": "Externe Login Controle",
@@ -269,9 +270,9 @@
             "TITLE": "Extern inloggen toegestaan",
             "DESCRIPTION": "Sta je gebruikers toe om in te loggen met een externe identiteitsprovider in plaats van het gebruik van de ZITADEL gebruiker om in te loggen."
           },
-          "PASSWORD_RESET_ALLOWED": {
-            "TITLE": "Wachtwoord resetten toegestaan",
-            "DESCRIPTION": "Sta je gebruikers toe om hun wachtwoord te resetten."
+          "HIDE_PASSWORD_RESET": {
+            "TITLE": "Wachtwoord reset verborgen",
+            "DESCRIPTION": "Sta uw gebruikers niet toe hun wachtwoord opnieuw in te stellen."
           },
           "DOMAIN_DISCOVERY_ALLOWED": {
             "TITLE": "Domeinontdekking toegestaan",
@@ -486,6 +487,7 @@
     "MORE": "meer",
     "STEP": "Stap",
     "SETUP": "Instellen",
+    "TEST": "Test",
     "UNSAVEDCHANGES": "Niet-opgeslagen wijzigingen",
     "UNSAVED": {
       "DIALOG": {
@@ -497,7 +499,8 @@
     "TABLE": {
       "SHOWUSER": "Toon gebruiker {{value}}"
     },
-    "DOWNLOAD": "Download"
+    "DOWNLOAD": "Download",
+    "APPLY": "Toepassen"
   },
   "MEMBERROLES": {
     "IAM_OWNER": "Heeft controle over de hele instantie, inclusief alle organisaties",
@@ -595,6 +598,7 @@
     "INVALID_FORMAT": "De opmaak is ongeldig.",
     "NOTANEMAIL": "De opgegeven waarde is geen e-mailadres.",
     "MINLENGTH": "Moet minimaal {{requiredLength}} tekens lang zijn.",
+    "MAXLENGTH": "Moet minder dan {{requiredLength}} tekens bevatten.",
     "UPPERCASEMISSING": "Moet een hoofdletter bevatten.",
     "LOWERCASEMISSING": "Moet een kleine letter bevatten.",
     "SYMBOLERROR": "Moet een symbool of leesteken bevatten.",
@@ -880,7 +884,8 @@
       "SET": "Stel nieuw wachtwoord in",
       "RESENDNOTIFICATION": "Stuur wachtwoord reset link",
       "REQUIRED": "Sommige verplichte velden ontbreken.",
-      "MINLENGTHERROR": "Moet minstens {{value}} tekens lang zijn."
+      "MINLENGTHERROR": "Moet minstens {{value}} tekens lang zijn.",
+      "MAXLENGTHERROR": "Moet minder dan {{value}} tekens bevatten"
     },
     "ID": "ID",
     "EMAIL": "E-mail",
@@ -1082,7 +1087,8 @@
       "REMOVEACTIONSLIST": {
         "TITLE": "Geselecteerde acties verwijderen?",
         "DESCRIPTION": "Weet u zeker dat u de geselecteerde acties uit de flow wilt verwijderen?"
-      }
+      },
+      "ABOUTNAME": "De naam van de actie en de naam van de functie in het javascript moeten hetzelfde zijn"
     },
     "TOAST": {
       "ACTIONSSET": "Acties ingesteld",
@@ -1292,6 +1298,7 @@
       "MEMBERCHANGED": "Beheerder gewijzigd.",
       "SETPRIMARY": "Primaire domein ingesteld.",
       "DELETED": "Organisatie succesvol verwijderd",
+      "DEFAULTORGNOTFOUND": "De standaardorganisatie is niet gevonden",
       "ORG_WAS_DELETED": "Organisatie is verwijderd."
     },
     "DIALOG": {
@@ -1313,16 +1320,13 @@
     }
   },
   "SETTINGS": {
-    "INSTANCE": {
-      "TITLE": "Instantie Instellingen",
-      "DESCRIPTION": "Deze instellingen zijn van toepassing op al uw organisaties, tenzij ze zijn overschreven."
-    },
     "LIST": {
       "ORGS": "Organisaties",
       "FEATURESETTINGS": "Functie-instellingen",
       "LANGUAGES": "Talen",
       "LOGIN": "Login Gedrag en Beveiliging",
       "LOCKOUT": "Lockout",
+      "AGE": "Wachtwoord verloopt",
       "COMPLEXITY": "Wachtwoord complexiteit",
       "NOTIFICATIONS": "Notificaties",
       "SMTP_PROVIDER": "SMTP Provider",
@@ -1377,7 +1381,9 @@
         "mk": "Македонски",
         "cs": "Čeština",
         "ru": "Русский",
-        "nl": "Nederlands"
+        "nl": "Nederlands",
+        "sv": "Svenska",
+        "hu": "Magyar"
       }
     },
     "SMTP": {
@@ -1414,6 +1420,8 @@
         "SID": "Sid",
         "TOKEN": "Token",
         "SENDERNUMBER": "Verzender Nummer",
+        "VERIFYSERVICESID": "Verificatieservice-SID",
+        "VERIFYSERVICESID_DESCRIPTION": "Het instellen van een Verificatieservice-SID maakt het mogelijk om de Twilio Verify-service te gebruiken in plaats van de Berichten-service voor het verifiëren van telefoonnummers en OTP-SMS.",
         "ADDED": "Twilio succesvol toegevoegd.",
         "UPDATED": "Twilio succesvol bijgewerkt.",
         "REMOVED": "Twilio verwijderd",
@@ -1434,9 +1442,7 @@
         "7": "Eenmalig Wachtwoord (OTP) - SMS",
         "8": "Eenmalig Wachtwoord (OTP) - Email"
       },
-      "ADDGENERATOR": "Definieer Secret Generator",
-      "GENERATORTYPE": "Type",
-      "EXPIRY": "Vervaldatum (in uren)",
+      "EXPIRY": "Vervaldatum (in minuten)",
       "INCLUDEDIGITS": "Inclusief Nummers",
       "INCLUDESYMBOLS": "Inclusief Symbolen",
       "INCLUDELOWERLETTERS": "Inclusief Kleinletters",
@@ -1466,12 +1472,18 @@
       "USERSCHEMA_DESCRIPTION": "Met gebruikerschema's kunt u de dataschema's van gebruikers beheren. Als de vlag is ingeschakeld, kunt u de nieuwe API en zijn functies gebruiken.",
       "ACTIONS": "Acties",
       "ACTIONS_DESCRIPTION": "Actions v2 maken het mogelijk om data-uitvoeringen en doelen te beheren. Als de vlag is ingeschakeld, kunt u de nieuwe API en zijn functies gebruiken.",
+      "OIDCSINGLEV1SESSIONTERMINATION": "OIDC Single V1 Sessiebeëindiging",
+      "OIDCSINGLEV1SESSIONTERMINATION_DESCRIPTION": "Als het vlagje is ingeschakeld, kunt u een enkele sessie beëindigen via de login-gebruikersinterface door een id_token met een `sid`-claim als id_token_hint op het eindpunt end_session te verstrekken. Houd er rekening mee dat momenteel alle sessies van dezelfde gebruikersagent (browser) worden beëindigd in de login-gebruikersinterface. Sessies die worden beheerd via de Session API staan al toe om individuele sessies te beëindigen.",
       "STATES": {
         "INHERITED": "Overgenomen",
         "ENABLED": "Ingeschakeld",
         "DISABLED": "Uitgeschakeld"
       },
       "INHERITED_DESCRIPTION": "Deze instelling stelt de waarde in op de standaardwaarde van het systeem.",
+      "INHERITEDINDICATOR_DESCRIPTION": {
+        "ENABLED": "\"Ingeschakeld\" wordt overgenomen",
+        "DISABLED": "\"Uitgeschakeld\" wordt overgenomen"
+      },
       "RESET": "Alles instellen op overgenomen"
     },
     "DIALOG": {
@@ -1542,8 +1554,8 @@
       }
     },
     "PWD_AGE": {
-      "TITLE": "Wachtwoord Veroudering",
-      "DESCRIPTION": "U kunt een beleid instellen voor de veroudering van wachtwoorden. Dit beleid geeft een waarschuwing nadat de specifieke verouderingstijd is verstreken."
+      "TITLE": "Wachtwoord verloopt",
+      "DESCRIPTION": "U kunt een beleid instellen voor het verlopen van wachtwoorden. Dit beleid dwingt de gebruiker om het wachtwoord te wijzigen bij de volgende aanmelding na het verlopen. Er zijn geen automatische waarschuwingen en meldingen."
     },
     "PWD_LOCKOUT": {
       "TITLE": "Lockout Beleid",
@@ -1570,6 +1582,9 @@
       "POLICYLINK": "Link naar Privacybeleid",
       "HELPLINK": "Link naar Help",
       "SUPPORTEMAIL": "Ondersteuning Email",
+      "DOCSLINK": "Documentenlink (Console)",
+      "CUSTOMLINK": "Aangepaste link (Console)",
+      "CUSTOMLINKTEXT": "Aangepaste linktekst (Console)",
       "SAVED": "Succesvol opgeslagen!",
       "RESET_TITLE": "Herstel Standaard Waarden",
       "RESET_DESCRIPTION": "U staat op het punt de standaard Links voor TOS en Privacybeleid te herstellen. Weet u zeker dat u wilt doorgaan?"
@@ -1603,7 +1618,10 @@
         "mk": "Македонски",
         "cs": "Čeština",
         "ru": "Русский",
-        "nl": "Nederlands"
+        "nl": "Nederlands",
+        "sv": "Svenska",
+        "id": "Bahasa Indonesia",
+        "ko": "한국어"
       },
       "KEYS": {
         "emailVerificationDoneText": "E-mail verificatie voltooid",
@@ -1618,7 +1636,6 @@
         "initPasswordText": "Initialiseer wachtwoord",
         "initializeDoneText": "Gebruiker initialisatie voltooid",
         "initializeUserText": "Initialiseer gebruiker",
-        "linkingUserPromptText": "Gebruiker koppelingsprompt",
         "linkingUserDoneText": "Gebruiker koppeling voltooid",
         "loginText": "Login",
         "logoutText": "Uitloggen",
@@ -1654,7 +1671,8 @@
         "PR": "Wachtwoord Reset",
         "DC": "Domein Claim",
         "PL": "Wachtwoordloos",
-        "PC": "Wachtwoord Verandering"
+        "PC": "Wachtwoord Verandering",
+        "IU": "Gebruiker uitnodigen"
       },
       "CHIPS": {
         "firstname": "Voornaam",
@@ -1673,7 +1691,9 @@
         "username": "Gebruikersnaam",
         "tempUsername": "Tijdelijke gebruikersnaam",
         "otp": "Eenmalig wachtwoord",
-        "verifyUrl": "Verifieer Eenmalig-wachtwoord URL"
+        "verifyUrl": "Verifieer Eenmalig-wachtwoord URL",
+        "expiry": "Vervaldatum",
+        "applicationName": "Toepassingsnaam"
       },
       "TOAST": {
         "UPDATED": "Aangepaste Teksten opgeslagen."
@@ -1692,8 +1712,8 @@
       "SHOWLOCKOUTFAILURES": "toon lockout mislukkingen",
       "MAXPASSWORDATTEMPTS": "Maximum pogingen voor wachtwoord",
       "MAXOTPATTEMPTS": "Maximale OTP-pogingen",
-      "EXPIREWARNDAYS": "Vervaldatum Waarschuwing na dag",
-      "MAXAGEDAYS": "Maximale Leeftijd in dagen",
+      "EXPIREWARNDAYS": "Waarschuwing voor verlopen na dagen",
+      "MAXAGEDAYS": "Maximale geldigheid in dagen",
       "USERLOGINMUSTBEDOMAIN": "Voeg organisatie domein toe als achtervoegsel aan inlognamen",
       "USERLOGINMUSTBEDOMAIN_DESCRIPTION": "Als u deze instelling inschakelt, worden alle inlognamen voorzien van een achtervoegsel met het domein van de organisatie. Als deze instelling is uitgeschakeld, moet u ervoor zorgen dat gebruikersnamen uniek zijn over alle organisaties.",
       "VALIDATEORGDOMAINS": "Verificatie van organisatiedomeinen vereist (DNS of HTTP-uitdaging)",
@@ -1701,8 +1721,8 @@
       "ALLOWUSERNAMEPASSWORD_DESC": "De conventionele login met gebruikersnaam en wachtwoord is toegestaan.",
       "ALLOWEXTERNALIDP_DESC": "De login is toegestaan voor de onderliggende identiteitsproviders",
       "ALLOWREGISTER_DESC": "Als de optie is geselecteerd, verschijnt er een extra stap voor het registreren van een gebruiker in het login proces.",
-      "FORCEMFA": "Forceer MFA",
-      "FORCEMFALOCALONLY": "Forceer MFA voor lokaal geauthenticeerde gebruikers",
+      "FORCEMFA": "MFA afdwingen voor alle gebruikers",
+      "FORCEMFALOCALONLY": "MFA alleen afdwingen voor lokaal geverifieerde gebruikers",
       "FORCEMFALOCALONLY_DESC": "Als de optie is geselecteerd, moeten lokaal geauthenticeerde gebruikers een tweede factor configureren voor login.",
       "HIDEPASSWORDRESET_DESC": "Als de optie is geselecteerd, kan de gebruiker zijn wachtwoord niet resetten in het login proces.",
       "HIDELOGINNAMESUFFIX": "Verberg Inlognaam achtervoegsel",
@@ -1771,7 +1791,7 @@
       "TYPE": {
         "OWNED": "Eigen Projecten",
         "OWNED_SINGULAR": "Eigen Project",
-        "GRANTED_SINGULAR": "Verleend Project"
+        "GRANTED_SINGULAR": "Project toegewezen {{name}}"
       },
       "PRIVATELABEL": {
         "TITLE": "Branding Instelling",
@@ -2040,7 +2060,7 @@
         "DESCRIPTION": "Voer de inloggegevens in voor uw Apple Provider"
       },
       "SAML": {
-        "TITLE": "Log in met Saml SP",
+        "TITLE": "Log in met SAML SP",
         "DESCRIPTION": "Voer de inloggegevens in voor uw SAML Provider"
       }
     },
@@ -2055,10 +2075,10 @@
       "ISAUTOCREATION_DESC": "Als geselecteerd, wordt een account aangemaakt als het nog niet bestaat.",
       "ISAUTOUPDATE": "Automatische update",
       "ISAUTOUPDATE_DESC": "Als geselecteerd, worden accounts bijgewerkt bij opnieuw authenticeren.",
-      "ISCREATIONALLOWED": "Account creatie toegestaan",
-      "ISCREATIONALLOWED_DESC": "Bepaalt of accounts kunnen worden aangemaakt.",
-      "ISLINKINGALLOWED": "Account koppeling toegestaan",
-      "ISLINKINGALLOWED_DESC": "Bepaalt of een identiteit kan worden gekoppeld aan een bestaand account.",
+      "ISCREATIONALLOWED": "Accountaanmaak toegestaan (handmatig)",
+      "ISCREATIONALLOWED_DESC": "Bepaalt of accounts kunnen worden aangemaakt met behulp van een extern account. Schakel uit als gebruikers accountinformatie niet mogen kunnen bewerken wanneer auto-aanmaak is ingeschakeld.",
+      "ISLINKINGALLOWED": "Accountkoppeling toegestaan (handmatig)",
+      "ISLINKINGALLOWED_DESC": "Bepaalt of een identiteit handmatig kan worden gekoppeld aan een bestaand account. Schakel uit als gebruikers alleen het voorgestelde account mogen kunnen koppelen in geval van actieve auto-koppeling.",
       "AUTOLINKING_DESC": "Bepaalt of een identiteit wordt gevraagd om te worden gekoppeld aan een bestaand account.",
       "AUTOLINKINGTYPE": {
         "0": "Uitgeschakeld",
@@ -2242,11 +2262,12 @@
   "SMTP": {
     "LIST": {
       "TITLE": "SMTP-provider",
-      "DESCRIPTION": "Dit zijn de SMTP-providers voor uw Zitadel-instantie. Activeer degene die u wilt gebruiken om meldingen naar uw gebruikers te sturen.",
+      "DESCRIPTION": "Dit zijn de SMTP-providers voor uw ZITADEL-instantie. Activeer degene die u wilt gebruiken om meldingen naar uw gebruikers te sturen.",
       "EMPTY": "Geen SMTP-provider beschikbaar",
       "ACTIVATED": "Geactiveerd",
       "ACTIVATE": "Aanbieder activeren",
       "DEACTIVATE": "Aanbieder deactiveren",
+      "TEST": "Test uw aanbieder",
       "TYPE": "Type",
       "DIALOG": {
         "ACTIVATED": "SMTP-configuratie is geactiveerd",
@@ -2270,7 +2291,21 @@
         "CURRENT_DESC_TITLE": "Dit zijn uw SMTP-instellingen",
         "PROVIDER_SETTINGS": "SMTP-providerinstellingen",
         "SENDER_SETTINGS": "Afzenderinstellingen",
-        "TEST_SETTINGS": "SMTP-instellingen testen"
+        "NEXT_STEPS": "Volgende stappen",
+        "ACTIVATE": {
+          "TITLE": "Activeer uw SMTP-provider",
+          "DESCRIPTION": "ZITADEL kan deze SMTP-provider niet gebruiken om meldingen te verzenden totdat u deze activeert. Als u deze provider activeert, worden alle andere actieve providers nu gedeactiveerd."
+        },
+        "DEACTIVATE": {
+          "TITLE": "Deactiveer uw SMTP-provider",
+          "DESCRIPTION": "Als u deze SMTP-provider deactiveert, kan ZITADEL deze niet gebruiken om meldingen te verzenden totdat u deze opnieuw activeert."
+        },
+        "SAVE_SETTINGS": "Sla uw instellingen op",
+        "TEST": {
+          "TITLE": "Test uw instellingen",
+          "DESCRIPTION": "U kunt de instellingen van uw SMTP-provider testen en het testresultaat controleren voordat u deze opslaat",
+          "RESULT": "Je email is succesvol verzonden"
+        }
       }
     },
     "DETAIL": {
@@ -2522,6 +2557,10 @@
       "CLIENTSECRETREGENERATED": "client geheim gegenereerd.",
       "DELETED": "App verwijderd.",
       "CONFIGCHANGED": "Wijzigingen gedetecteerd!"
+    },
+    "LOGINV2": {
+      "USEV2": "Nieuwe login-gebruikersinterface gebruiken",
+      "BASEURL": "Aangepaste basis-URL voor de nieuwe login-gebruikersinterface"
     }
   },
   "GENDERS": {
@@ -2544,7 +2583,10 @@
     "mk": "Македонски",
     "cs": "Čeština",
     "ru": "Русский",
-    "nl": "Nederlands"
+    "nl": "Nederlands",
+    "sv": "Svenska",
+    "id": "Bahasa Indonesia",
+    "ko": "한국어"
   },
   "MEMBER": {
     "ADD": "Voeg een Manager toe",

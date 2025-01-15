@@ -18,8 +18,6 @@ type Instance interface {
 	ProjectID() string
 	ConsoleClientID() string
 	ConsoleApplicationID() string
-	RequestedDomain() string
-	RequestedHost() string
 	DefaultLanguage() language.Tag
 	DefaultOrganisationID() string
 	SecurityPolicyAllowedOrigins() []string
@@ -30,8 +28,8 @@ type Instance interface {
 }
 
 type InstanceVerifier interface {
-	InstanceByHost(ctx context.Context, host string) (Instance, error)
-	InstanceByID(ctx context.Context) (Instance, error)
+	InstanceByHost(ctx context.Context, host, publicDomain string) (Instance, error)
+	InstanceByID(ctx context.Context, id string) (Instance, error)
 }
 
 type instance struct {
@@ -66,14 +64,6 @@ func (i *instance) ConsoleClientID() string {
 
 func (i *instance) ConsoleApplicationID() string {
 	return i.appID
-}
-
-func (i *instance) RequestedDomain() string {
-	return i.domain
-}
-
-func (i *instance) RequestedHost() string {
-	return i.domain
 }
 
 func (i *instance) DefaultLanguage() language.Tag {
@@ -116,16 +106,6 @@ func WithInstanceID(ctx context.Context, id string) context.Context {
 	return context.WithValue(ctx, instanceKey, &instance{id: id})
 }
 
-func WithRequestedDomain(ctx context.Context, domain string) context.Context {
-	i, ok := ctx.Value(instanceKey).(*instance)
-	if !ok {
-		i = new(instance)
-	}
-
-	i.domain = domain
-	return context.WithValue(ctx, instanceKey, i)
-}
-
 func WithConsole(ctx context.Context, projectID, appID string) context.Context {
 	i, ok := ctx.Value(instanceKey).(*instance)
 	if !ok {
@@ -134,7 +114,15 @@ func WithConsole(ctx context.Context, projectID, appID string) context.Context {
 
 	i.projectID = projectID
 	i.appID = appID
-	//i.clientID = clientID
+	return context.WithValue(ctx, instanceKey, i)
+}
+
+func WithConsoleClientID(ctx context.Context, clientID string) context.Context {
+	i, ok := ctx.Value(instanceKey).(*instance)
+	if !ok {
+		i = new(instance)
+	}
+	i.clientID = clientID
 	return context.WithValue(ctx, instanceKey, i)
 }
 

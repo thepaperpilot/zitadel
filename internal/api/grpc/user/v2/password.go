@@ -6,7 +6,7 @@ import (
 	"github.com/zitadel/zitadel/internal/api/grpc/object/v2"
 	"github.com/zitadel/zitadel/internal/domain"
 	"github.com/zitadel/zitadel/internal/zerrors"
-	user "github.com/zitadel/zitadel/pkg/grpc/user/v2beta"
+	"github.com/zitadel/zitadel/pkg/grpc/user/v2"
 )
 
 func (s *Server) PasswordReset(ctx context.Context, req *user.PasswordResetRequest) (_ *user.PasswordResetResponse, err error) {
@@ -51,9 +51,9 @@ func (s *Server) SetPassword(ctx context.Context, req *user.SetPasswordRequest) 
 
 	switch v := req.GetVerification().(type) {
 	case *user.SetPasswordRequest_CurrentPassword:
-		details, err = s.command.ChangePassword(ctx, "", req.GetUserId(), v.CurrentPassword, req.GetNewPassword().GetPassword(), "")
+		details, err = s.command.ChangePassword(ctx, "", req.GetUserId(), v.CurrentPassword, req.GetNewPassword().GetPassword(), "", req.GetNewPassword().GetChangeRequired())
 	case *user.SetPasswordRequest_VerificationCode:
-		details, err = s.command.SetPasswordWithVerifyCode(ctx, "", req.GetUserId(), v.VerificationCode, req.GetNewPassword().GetPassword(), "")
+		details, err = s.command.SetPasswordWithVerifyCode(ctx, "", req.GetUserId(), v.VerificationCode, req.GetNewPassword().GetPassword(), "", req.GetNewPassword().GetChangeRequired())
 	case nil:
 		details, err = s.command.SetPassword(ctx, "", req.GetUserId(), req.GetNewPassword().GetPassword(), req.GetNewPassword().GetChangeRequired())
 	default:

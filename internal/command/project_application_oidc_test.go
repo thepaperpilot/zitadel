@@ -11,6 +11,7 @@ import (
 	"github.com/zitadel/passwap"
 	"github.com/zitadel/passwap/bcrypt"
 
+	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/command/preparation"
 	"github.com/zitadel/zitadel/internal/crypto"
 	"github.com/zitadel/zitadel/internal/domain"
@@ -158,7 +159,7 @@ func TestAddOIDCApp(t *testing.T) {
 					project.NewOIDCConfigAddedEvent(ctx, &agg.Aggregate,
 						domain.OIDCVersionV1,
 						"id",
-						"clientID@project",
+						"clientID",
 						"",
 						[]string{"https://test.ch"},
 						[]domain.OIDCResponseType{domain.OIDCResponseTypeCode},
@@ -174,6 +175,9 @@ func TestAddOIDCApp(t *testing.T) {
 						0,
 						[]string{"https://sub.test.ch"},
 						false,
+						"",
+						domain.LoginVersionUnspecified,
+						"",
 					),
 				},
 			},
@@ -182,6 +186,74 @@ func TestAddOIDCApp(t *testing.T) {
 			name: "correct",
 			fields: fields{
 				idGenerator: id_mock.NewIDGeneratorExpectIDs(t, "clientID"),
+			},
+			args: args{
+				app: &addOIDCApp{
+					AddApp: AddApp{
+						Aggregate: *agg,
+						ID:        "id",
+						Name:      "name",
+					},
+					GrantTypes:    []domain.OIDCGrantType{domain.OIDCGrantTypeAuthorizationCode},
+					ResponseTypes: []domain.OIDCResponseType{domain.OIDCResponseTypeCode},
+					Version:       domain.OIDCVersionV1,
+
+					ApplicationType: domain.OIDCApplicationTypeWeb,
+					AuthMethodType:  domain.OIDCAuthMethodTypeNone,
+					AccessTokenType: domain.OIDCTokenTypeBearer,
+				},
+				filter: NewMultiFilter().
+					Append(func(ctx context.Context, queryFactory *eventstore.SearchQueryBuilder) ([]eventstore.Event, error) {
+						return []eventstore.Event{
+							project.NewProjectAddedEvent(
+								ctx,
+								&agg.Aggregate,
+								"project",
+								false,
+								false,
+								false,
+								domain.PrivateLabelingSettingUnspecified,
+							),
+						}, nil
+					}).
+					Filter(),
+			},
+			want: Want{
+				Commands: []eventstore.Command{
+					project.NewApplicationAddedEvent(ctx, &agg.Aggregate,
+						"id",
+						"name",
+					),
+					project.NewOIDCConfigAddedEvent(ctx, &agg.Aggregate,
+						domain.OIDCVersionV1,
+						"id",
+						"clientID",
+						"",
+						nil,
+						[]domain.OIDCResponseType{domain.OIDCResponseTypeCode},
+						[]domain.OIDCGrantType{domain.OIDCGrantTypeAuthorizationCode},
+						domain.OIDCApplicationTypeWeb,
+						domain.OIDCAuthMethodTypeNone,
+						nil,
+						false,
+						domain.OIDCTokenTypeBearer,
+						false,
+						false,
+						false,
+						0,
+						nil,
+						false,
+						"",
+						domain.LoginVersionUnspecified,
+						"",
+					),
+				},
+			},
+		},
+		{
+			name: "correct with old ID format",
+			fields: fields{
+				idGenerator: id_mock.NewIDGeneratorExpectIDs(t, "clientID@project"),
 			},
 			args: args{
 				app: &addOIDCApp{
@@ -239,6 +311,9 @@ func TestAddOIDCApp(t *testing.T) {
 						0,
 						nil,
 						false,
+						"",
+						domain.LoginVersionUnspecified,
+						"",
 					),
 				},
 			},
@@ -288,7 +363,7 @@ func TestAddOIDCApp(t *testing.T) {
 					project.NewOIDCConfigAddedEvent(ctx, &agg.Aggregate,
 						domain.OIDCVersionV1,
 						"id",
-						"clientID@project",
+						"clientID",
 						"secret",
 						nil,
 						[]domain.OIDCResponseType{domain.OIDCResponseTypeCode},
@@ -304,6 +379,9 @@ func TestAddOIDCApp(t *testing.T) {
 						0,
 						nil,
 						false,
+						"",
+						domain.LoginVersionUnspecified,
+						"",
 					),
 				},
 			},
@@ -353,7 +431,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 				eventstore: expectEventstore(),
 			},
 			args: args{
-				ctx:           context.Background(),
+				ctx:           authz.WithInstanceID(context.Background(), "instanceID"),
 				oidcApp:       &domain.OIDCApp{},
 				resourceOwner: "org1",
 			},
@@ -369,7 +447,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 				),
 			},
 			args: args{
-				ctx: context.Background(),
+				ctx: authz.WithInstanceID(context.Background(), "instanceID"),
 				oidcApp: &domain.OIDCApp{
 					ObjectRoot: models.ObjectRoot{
 						AggregateID: "project1",
@@ -398,7 +476,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 				),
 			},
 			args: args{
-				ctx: context.Background(),
+				ctx: authz.WithInstanceID(context.Background(), "instanceID"),
 				oidcApp: &domain.OIDCApp{
 					ObjectRoot: models.ObjectRoot{
 						AggregateID: "project1",
@@ -434,7 +512,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 							&project.NewAggregate("project1", "org1").Aggregate,
 							domain.OIDCVersionV1,
 							"app1",
-							"client1@project",
+							"client1",
 							"secret",
 							[]string{"https://test.ch"},
 							[]domain.OIDCResponseType{domain.OIDCResponseTypeCode},
@@ -450,13 +528,16 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 							time.Second*1,
 							[]string{"https://sub.test.ch"},
 							true,
+							"https://test.ch/backchannel",
+							domain.LoginVersion2,
+							"https://login.test.ch",
 						),
 					),
 				),
 				idGenerator: id_mock.NewIDGeneratorExpectIDs(t, "app1", "client1"),
 			},
 			args: args{
-				ctx: context.Background(),
+				ctx: authz.WithInstanceID(context.Background(), "instanceID"),
 				oidcApp: &domain.OIDCApp{
 					ObjectRoot: models.ObjectRoot{
 						AggregateID: "project1",
@@ -477,6 +558,9 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{" https://sub.test.ch "},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     " https://test.ch/backchannel ",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             " https://login.test.ch ",
 				},
 				resourceOwner: "org1",
 			},
@@ -488,7 +572,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					},
 					AppID:                    "app1",
 					AppName:                  "app",
-					ClientID:                 "client1@project",
+					ClientID:                 "client1",
 					ClientSecretString:       "secret",
 					AuthMethodType:           domain.OIDCAuthMethodTypePost,
 					OIDCVersion:              domain.OIDCVersionV1,
@@ -505,6 +589,9 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 					State:                    domain.AppStateActive,
 					Compliance:               &domain.Compliance{},
 				},
@@ -532,7 +619,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 							&project.NewAggregate("project1", "org1").Aggregate,
 							domain.OIDCVersionV1,
 							"app1",
-							"client1@project",
+							"client1",
 							"secret",
 							[]string{"https://test.ch"},
 							[]domain.OIDCResponseType{domain.OIDCResponseTypeCode},
@@ -548,13 +635,16 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 							time.Second*1,
 							[]string{"https://sub.test.ch"},
 							true,
+							"https://test.ch/backchannel",
+							domain.LoginVersion2,
+							"https://login.test.ch",
 						),
 					),
 				),
 				idGenerator: id_mock.NewIDGeneratorExpectIDs(t, "app1", "client1"),
 			},
 			args: args{
-				ctx: context.Background(),
+				ctx: authz.WithInstanceID(context.Background(), "instanceID"),
 				oidcApp: &domain.OIDCApp{
 					ObjectRoot: models.ObjectRoot{
 						AggregateID: "project1",
@@ -575,6 +665,9 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 				},
 				resourceOwner: "org1",
 			},
@@ -586,7 +679,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					},
 					AppID:                    "app1",
 					AppName:                  "app",
-					ClientID:                 "client1@project",
+					ClientID:                 "client1",
 					ClientSecretString:       "secret",
 					AuthMethodType:           domain.OIDCAuthMethodTypePost,
 					OIDCVersion:              domain.OIDCVersionV1,
@@ -603,6 +696,9 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 					State:                    domain.AppStateActive,
 					Compliance:               &domain.Compliance{},
 				},
@@ -611,7 +707,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			r := &Commands{
+			c := &Commands{
 				eventstore:      tt.fields.eventstore(t),
 				idGenerator:     tt.fields.idGenerator,
 				newHashedSecret: mockHashedSecret("secret"),
@@ -619,7 +715,8 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 					ClientSecret: emptyConfig,
 				},
 			}
-			got, err := r.AddOIDCApplication(tt.args.ctx, tt.args.oidcApp, tt.args.resourceOwner)
+			c.setMilestonesCompletedForTest("instanceID")
+			got, err := c.AddOIDCApplication(tt.args.ctx, tt.args.oidcApp, tt.args.resourceOwner)
 			if tt.res.err == nil {
 				assert.NoError(t, err)
 			}
@@ -635,7 +732,7 @@ func TestCommandSide_AddOIDCApplication(t *testing.T) {
 
 func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 	type fields struct {
-		eventstore *eventstore.Eventstore
+		eventstore func(*testing.T) *eventstore.Eventstore
 	}
 	type args struct {
 		ctx           context.Context
@@ -655,9 +752,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "invalid app, invalid argument error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
-				),
+				eventstore: expectEventstore(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -676,9 +771,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "missing appid, invalid argument error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
-				),
+				eventstore: expectEventstore(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -700,9 +793,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "missing aggregateid, invalid argument error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
-				),
+				eventstore: expectEventstore(),
 			},
 			args: args{
 				ctx: context.Background(),
@@ -724,8 +815,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "app not existing, not found error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
+				eventstore: expectEventstore(
 					expectFilter(),
 				),
 			},
@@ -749,8 +839,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "no changes, precondition error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
+				eventstore: expectEventstore(
 					expectFilter(
 						eventFromEventPusher(
 							project.NewApplicationAddedEvent(context.Background(),
@@ -780,6 +869,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 								time.Second*1,
 								[]string{"https://sub.test.ch"},
 								true,
+								"https://test.ch/backchannel",
+								domain.LoginVersion2,
+								"https://login.test.ch",
 							),
 						),
 					),
@@ -808,6 +900,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 				},
 				resourceOwner: "org1",
 			},
@@ -818,8 +913,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "no changes whitespaces are ignored, precondition error",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
+				eventstore: expectEventstore(
 					expectFilter(
 						eventFromEventPusher(
 							project.NewApplicationAddedEvent(context.Background(),
@@ -849,6 +943,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 								time.Second*1,
 								[]string{"https://sub.test.ch"},
 								true,
+								"https://test.ch/backchannel",
+								domain.LoginVersion2,
+								"https://login.test.ch",
 							),
 						),
 					),
@@ -877,6 +974,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{" https://sub.test.ch "},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     " https://test.ch/backchannel ",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             " https://login.test.ch ",
 				},
 				resourceOwner: "org1",
 			},
@@ -887,8 +987,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 		{
 			name: "change oidc app, ok",
 			fields: fields{
-				eventstore: eventstoreExpect(
-					t,
+				eventstore: expectEventstore(
 					expectFilter(
 						eventFromEventPusher(
 							project.NewApplicationAddedEvent(context.Background(),
@@ -918,6 +1017,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 								time.Second*1,
 								[]string{"https://sub.test.ch"},
 								true,
+								"https://test.ch/backchannel",
+								domain.LoginVersion1,
+								"",
 							),
 						),
 					),
@@ -952,6 +1054,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 2,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 				},
 				resourceOwner: "org1",
 			},
@@ -979,6 +1084,9 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 					ClockSkew:                time.Second * 2,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: true,
+					BackChannelLogoutURI:     "https://test.ch/backchannel",
+					LoginVersion:             domain.LoginVersion2,
+					LoginBaseURI:             "https://login.test.ch",
 					Compliance:               &domain.Compliance{},
 					State:                    domain.AppStateActive,
 				},
@@ -988,7 +1096,7 @@ func TestCommandSide_ChangeOIDCApplication(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Commands{
-				eventstore: tt.fields.eventstore,
+				eventstore: tt.fields.eventstore(t),
 			}
 			got, err := r.ChangeOIDCApplication(tt.args.ctx, tt.args.oidcApp, tt.args.resourceOwner)
 			if tt.res.err == nil {
@@ -1103,6 +1211,9 @@ func TestCommandSide_ChangeOIDCApplicationSecret(t *testing.T) {
 								time.Second*1,
 								[]string{"https://sub.test.ch"},
 								false,
+								"",
+								domain.LoginVersionUnspecified,
+								"",
 							),
 						),
 					),
@@ -1146,6 +1257,8 @@ func TestCommandSide_ChangeOIDCApplicationSecret(t *testing.T) {
 					ClockSkew:                time.Second * 1,
 					AdditionalOrigins:        []string{"https://sub.test.ch"},
 					SkipNativeAppSuccessPage: false,
+					BackChannelLogoutURI:     "",
+					LoginVersion:             domain.LoginVersionUnspecified,
 					State:                    domain.AppStateActive,
 				},
 			},
@@ -1184,6 +1297,8 @@ func newOIDCAppChangedEvent(ctx context.Context, appID, projectID, resourceOwner
 		project.ChangeIDTokenRoleAssertion(false),
 		project.ChangeIDTokenUserinfoAssertion(false),
 		project.ChangeClockSkew(time.Second * 2),
+		project.ChangeLoginVersion(domain.LoginVersion2),
+		project.ChangeLoginBaseURI("https://login.test.ch"),
 	}
 	event, _ := project.NewOIDCConfigChangedEvent(ctx,
 		&project.NewAggregate(projectID, resourceOwner).Aggregate,
@@ -1260,6 +1375,9 @@ func TestCommands_VerifyOIDCClientSecret(t *testing.T) {
 							time.Second*1,
 							[]string{"https://sub.test.ch"},
 							false,
+							"",
+							domain.LoginVersionUnspecified,
+							"",
 						),
 					),
 				),
@@ -1295,11 +1413,11 @@ func TestCommands_VerifyOIDCClientSecret(t *testing.T) {
 							time.Second*1,
 							[]string{"https://sub.test.ch"},
 							false,
+							"",
+							domain.LoginVersionUnspecified,
+							"",
 						),
 					),
-				),
-				expectPush(
-					project.NewOIDCConfigSecretCheckSucceededEvent(context.Background(), &agg.Aggregate, "appID"),
 				),
 			),
 		},
@@ -1332,11 +1450,11 @@ func TestCommands_VerifyOIDCClientSecret(t *testing.T) {
 							time.Second*1,
 							[]string{"https://sub.test.ch"},
 							false,
+							"",
+							domain.LoginVersionUnspecified,
+							"",
 						),
 					),
-				),
-				expectPush(
-					project.NewOIDCConfigSecretCheckFailedEvent(context.Background(), &agg.Aggregate, "appID"),
 				),
 			),
 			wantErr: zerrors.ThrowInvalidArgument(err, "COMMAND-Bz542", "Errors.Project.App.ClientSecretInvalid"),

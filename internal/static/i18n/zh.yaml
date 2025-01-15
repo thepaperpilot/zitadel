@@ -53,11 +53,24 @@ Errors:
     NotFound: 未找到 SMS 配置
     AlreadyActive: SMS 配置已启用
     AlreadyDeactivated: SMS 配置已停用
+  SMTP:
+    NotEmailMessage: 消息不是电子邮件消息
+    RequiredAttributes: 必须设置主题、收件人和内容，但部分或全部为空
+    CouldNotSplit: 无法拆分主机和端口以连接到 smtp
+    CouldNotDial: 无法与 SMTP 服务器联系，请检查端口、防火墙问题...
+    CouldNotDialTLS: 无法使用 TLS 与 SMTP 服务器联系，请检查端口、防火墙问题...
+    CouldNotCreateClient: 无法创建 smtp 客户端
+    CouldNotStartTLS: 无法启动 tls
+    CouldNotAuth: 无法添加 smtp 身份验证，请检查您的用户名和密码是否正确，如果正确，可能您的提供商需要 ZITADEL 不支持的身份验证方法
+    CouldNotSetSender: 无法设置发件人
+    CouldNotSetRecipient: 无法设置收件人
   SMTPConfig:
+    TestPassword: 未找到测试密码
     NotFound: 未找到 SMTP 配置
     AlreadyExists: SMTP 配置已存在
     AlreadyDeactivated: SMTP 配置已停用
     SenderAdressNotCustomDomain: 发件人地址必须在在实例的域名设置中验证。
+    TestEmailNotFound: 找不到用于测试的电子邮件地址
   Notification:
     NoDomain: 未找到对应的域名
   User:
@@ -136,7 +149,7 @@ Errors:
       Invalid: 密码无效
       NotSet: 用户未设置密码
       NotChanged: 新密码不能与您当前的密码相同
-      NotSupported: 不支持密码哈希编码
+      NotSupported: 不支持密码哈希编码。查看 https://zitadel.com/docs/concepts/architecture/secrets#hashed-secrets
     PasswordComplexityPolicy:
       NotFound: 未找到密码策略
       MinLength: 密码太短
@@ -470,6 +483,7 @@ Errors:
     NotActive: 动作不是启用状态
     NotInactive: 动作不是停用状态
     MaxAllowed: 不允许额外的动作
+    NotEnabled: 未启用“操作”功能
   Flow:
     FlowTypeMissing: 缺少身份认证流程类型
     Empty: 身份认证流程为空
@@ -481,6 +495,7 @@ Errors:
     SQLStatement: 无法创建 SQL 语句
     InvalidRequest: 请求无效
     TooManyNestingLevels: 查询嵌套级别过多（最多 20 个）
+    LimitExceeded: 限制已超出
   Quota:
     AlreadyExists: 这个单位的配额已经存在
     NotFound: 没有找到该单位的配额
@@ -515,6 +530,7 @@ Errors:
     IDPMissing: 请求中缺少IDP ID
     IDPInvalid: 请求的 IDP 无效
     ResponseInvalid: IDP 响应无效
+    MissingSingleMappingAttribute: 不包含映射属性或具有多个值
     SuccessURLMissing: 请求中缺少成功URL
     FailureURLMissing: 请求中缺少失败的URL
     StateMissing: 请求中缺少状态参数
@@ -533,6 +549,12 @@ Errors:
       Invalid: 令牌无效
       Expired: 令牌已过期
     InvalidClient: 没有为该客户发放令牌
+  SAMLRequest:
+    AlreadyExists: SAMLRequest 已存在
+    NotExisting: SAMLRequest不存在
+    WrongLoginClient: 其他登录客户端创建的 SAMLRequest
+  SAMLSession:
+    InvalidClient: 未向该客户端发出 SAMLResponse
   Feature:
     NotExisting: 功能不存在
     TypeNotSupported: 不支持功能类型
@@ -548,6 +570,8 @@ Errors:
     NotFound: 未找到执行
     IncludeNotFound: 包括未找到的内容
     NoTargets: 没有定义目标
+    Failed: 执行失败
+    ResponseIsNotValidJSON: 响应不是有效的 JSON
   UserSchema:
     NotEnabled: 未启用“用户架构”功能
     Type:
@@ -558,6 +582,11 @@ Errors:
     NotActive: 用户架构未激活
     NotInactive: 用户架构未处于非活动状态
     NotExists: 用户架构不存在
+    ID:
+      Missing: 缺少用户架构 ID
+    Invalid: 用户架构无效
+    Data:
+      Invalid: 用户架构的数据无效
   TokenExchange:
     FeatureDisabled: 您的实例已禁用令牌交换功能。 https://zitadel.com/docs/apis/resources/feature_service_v2/feature-service-set-instance-features
     Token:
@@ -569,6 +598,13 @@ Errors:
       NotForAPI: API 不允许使用模拟令牌
     Impersonation:
       PolicyDisabled: 实例安全策略中禁用模拟
+  WebKey:
+    ActiveDelete: 无法删除活动 Web 密钥
+    Config: 无效的 Web 密钥配置
+    Duplicate: Web 密钥 ID 不唯一
+    FeatureDisabled: Web 密钥功能已禁用
+    NoActive: 未找到活动 Web 密钥
+    NotFound: 未找到 Web 密钥
 
 AggregateTypes:
   action: 动作
@@ -592,6 +628,9 @@ AggregateTypes:
   restrictions: 限制
   system: 系统
   session: 会话
+  web_key: Web 密钥
+  saml_request: SAML 请求
+  saml_session: SAML 会话
 
 EventTypes:
   execution:
@@ -613,6 +652,7 @@ EventTypes:
         failed: 初始化检查失败
     token:
       added: 已创建访问令牌
+      v2.added: 已创建访问令牌
     impersonated: 用户冒充
     username:
       reserved: 保留用户名
@@ -654,6 +694,13 @@ EventTypes:
         check:
           succeeded: 初始化检查成功
           failed: 初始化检查失败
+      invite:
+        code:
+          added: 生成了邀请码
+          sent: 发送了邀请码
+        check:
+          succeeded: 邀请检查成功
+          failed: 邀请检查失败
       username:
         reserved: 保留用户名
         released: 用户名已发布
@@ -1011,6 +1058,9 @@ EventTypes:
           check:
             succeeded: 检查 OIDC Client Secret 成功
             failed: 检查 OIDC Client Secret 失败
+        key:
+          added: 添加了 OIDC 应用密钥
+          removed: OIDC 应用密钥已删除
       api:
         secret:
           check:
@@ -1154,12 +1204,6 @@ EventTypes:
     deactivated: 停用动作
     reactivated: 启用动作
     removed: 删除动作
-  user_schema:
-    created: 已创建用户架构
-    updated: 用户架构已更新
-    deactivated: 用户架构已停用
-    reactivated: 用户架构已重新激活
-    deleted: 用户架构已删除
   instance:
     added: 实例已添加
     changed: 实例已更改
@@ -1288,6 +1332,37 @@ EventTypes:
         password:
           changed: SMTP 配置密码已更改
         removed: SMTP 配置已删除
+  user_schema:
+    created: 已创建用户架构
+    updated: 用户架构已更新
+    deactivated: 用户架构已停用
+    reactivated: 用户架构已重新激活
+    deleted: 用户架构已删除
+    user:
+      created: 用户已创建
+      updated: 用户已更新
+      deleted: 用户已删除
+      email:
+        updated: 电子邮件地址已更改
+        verified: 电子邮件地址已验证
+        verification:
+          failed: 电子邮件地址验证失败
+        code:
+          added: 电子邮件地址验证码已生成
+          sent: 电子邮件地址验证码已发送
+      phone:
+        updated: 电话号码已更改
+        verified: 电话号码已验证
+        verification:
+          failed: 电话号码验证失败
+        code:
+          added: 电话号码验证码已生成
+          sent: 电话号码验证码已发送
+  web_key:
+    added: 已添加 Web Key
+    activated: 已激活 Web Key
+    deactivated: 已停用 Web Key
+    removed: 已删除 Web Key
 
 Application:
   OIDC:

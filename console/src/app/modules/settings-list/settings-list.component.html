@@ -1,4 +1,5 @@
 <cnsl-sidenav
+  *ngIf="currentSetting"
   [title]="title"
   [description]="description"
   [indented]="true"
@@ -17,6 +18,9 @@
   </ng-container>
   <ng-container *ngIf="currentSetting === 'complexity'">
     <cnsl-password-complexity-policy [serviceType]="serviceType"></cnsl-password-complexity-policy>
+  </ng-container>
+  <ng-container *ngIf="currentSetting === 'age'">
+    <cnsl-password-age-policy [serviceType]="serviceType"></cnsl-password-age-policy>
   </ng-container>
   <ng-container *ngIf="currentSetting === 'lockout'">
     <cnsl-password-lockout-policy [serviceType]="serviceType"></cnsl-password-lockout-policy>

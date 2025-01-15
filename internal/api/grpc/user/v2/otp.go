@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/zitadel/zitadel/internal/api/grpc/object/v2"
-	user "github.com/zitadel/zitadel/pkg/grpc/user/v2beta"
+	"github.com/zitadel/zitadel/pkg/grpc/user/v2"
 )
 
 func (s *Server) AddOTPSMS(ctx context.Context, req *user.AddOTPSMSRequest) (*user.AddOTPSMSResponse, error) {
@@ -13,7 +13,6 @@ func (s *Server) AddOTPSMS(ctx context.Context, req *user.AddOTPSMSRequest) (*us
 		return nil, err
 	}
 	return &user.AddOTPSMSResponse{Details: object.DomainToDetailsPb(details)}, nil
-
 }
 
 func (s *Server) RemoveOTPSMS(ctx context.Context, req *user.RemoveOTPSMSRequest) (*user.RemoveOTPSMSResponse, error) {

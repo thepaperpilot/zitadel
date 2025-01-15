@@ -7,11 +7,15 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/zitadel/zitadel/internal/api/grpc/object/v2"
-	feature "github.com/zitadel/zitadel/pkg/grpc/feature/v2beta"
+	"github.com/zitadel/zitadel/pkg/grpc/feature/v2"
 )
 
 func (s *Server) SetSystemFeatures(ctx context.Context, req *feature.SetSystemFeaturesRequest) (_ *feature.SetSystemFeaturesResponse, err error) {
-	details, err := s.command.SetSystemFeatures(ctx, systemFeaturesToCommand(req))
+	features, err := systemFeaturesToCommand(req)
+	if err != nil {
+		return nil, err
+	}
+	details, err := s.command.SetSystemFeatures(ctx, features)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +43,11 @@ func (s *Server) GetSystemFeatures(ctx context.Context, req *feature.GetSystemFe
 }
 
 func (s *Server) SetInstanceFeatures(ctx context.Context, req *feature.SetInstanceFeaturesRequest) (_ *feature.SetInstanceFeaturesResponse, err error) {
-	details, err := s.command.SetInstanceFeatures(ctx, instanceFeaturesToCommand(req))
+	features, err := instanceFeaturesToCommand(req)
+	if err != nil {
+		return nil, err
+	}
+	details, err := s.command.SetInstanceFeatures(ctx, features)
 	if err != nil {
 		return nil, err
 	}

@@ -409,9 +409,6 @@ func CustomTextsToLoginDomain(instanceID, aggregateID, lang string, texts *Custo
 		if strings.HasPrefix(text.Key, domain.LoginKeyRegistrationOrg) {
 			registrationOrgKeyToDomain(text, result)
 		}
-		if strings.HasPrefix(text.Key, domain.LoginKeyLinkingUserPrompt) {
-			linkingUserPromptKeyToDomain(text, result)
-		}
 		if strings.HasPrefix(text.Key, domain.LoginKeyLinkingUserDone) {
 			linkingUserDoneKeyToDomain(text, result)
 		}
@@ -891,6 +888,9 @@ func passwordChangeKeyToDomain(text *CustomText, result *domain.CustomLoginText)
 	if text.Key == domain.LoginKeyPasswordChangeDescription {
 		result.PasswordChange.Description = text.Text
 	}
+	if text.Key == domain.LoginKeyPasswordChangeExpiredDescription {
+		result.PasswordChange.ExpiredDescription = text.Text
+	}
 	if text.Key == domain.LoginKeyPasswordChangeOldPasswordLabel {
 		result.PasswordChange.OldPasswordLabel = text.Text
 	}
@@ -1100,21 +1100,6 @@ func registrationOrgKeyToDomain(text *CustomText, result *domain.CustomLoginText
 	}
 	if text.Key == domain.LoginKeyRegisterOrgSaveButtonText {
 		result.RegistrationOrg.SaveButtonText = text.Text
-	}
-}
-
-func linkingUserPromptKeyToDomain(text *CustomText, result *domain.CustomLoginText) {
-	if text.Key == domain.LoginKeyLinkingUserPromptTitle {
-		result.LinkingUserPrompt.Title = text.Text
-	}
-	if text.Key == domain.LoginKeyLinkingUserPromptDescription {
-		result.LinkingUserPrompt.Description = text.Text
-	}
-	if text.Key == domain.LoginKeyLinkingUserPromptLinkButtonText {
-		result.LinkingUserPrompt.LinkButtonText = text.Text
-	}
-	if text.Key == domain.LoginKeyLinkingUserPromptOtherButtonText {
-		result.LinkingUserPrompt.OtherButtonText = text.Text
 	}
 }
 

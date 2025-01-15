@@ -19,6 +19,7 @@ const (
 	UserReactivatedType       = userEventTypePrefix + "reactivated"
 	UserRemovedType           = userEventTypePrefix + "removed"
 	UserTokenAddedType        = userEventTypePrefix + "token.added"
+	UserTokenV2AddedType      = userEventTypePrefix + "token.v2.added"
 	UserTokenRemovedType      = userEventTypePrefix + "token.removed"
 	UserImpersonatedType      = userEventTypePrefix + "impersonated"
 	UserDomainClaimedType     = userEventTypePrefix + "domain.claimed"
@@ -279,6 +280,39 @@ func UserTokenAddedEventMapper(event eventstore.Event) (eventstore.Event, error)
 	return tokenAdded, nil
 }
 
+type UserTokenV2AddedEvent struct {
+	*eventstore.BaseEvent `json:"-"`
+
+	TokenID string `json:"tokenId,omitempty"`
+}
+
+func (e *UserTokenV2AddedEvent) Payload() interface{} {
+	return e
+}
+
+func (e *UserTokenV2AddedEvent) SetBaseEvent(b *eventstore.BaseEvent) {
+	e.BaseEvent = b
+}
+
+func (e *UserTokenV2AddedEvent) UniqueConstraints() []*eventstore.UniqueConstraint {
+	return nil
+}
+
+func NewUserTokenV2AddedEvent(
+	ctx context.Context,
+	aggregate *eventstore.Aggregate,
+	tokenID string,
+) *UserTokenV2AddedEvent {
+	return &UserTokenV2AddedEvent{
+		BaseEvent: eventstore.NewBaseEventForPush(
+			ctx,
+			aggregate,
+			UserTokenV2AddedType,
+		),
+		TokenID: tokenID,
+	}
+}
+
 type UserImpersonatedEvent struct {
 	eventstore.BaseEvent `json:"-"`
 
@@ -396,7 +430,7 @@ func NewDomainClaimedEvent(
 		UserName:              userName,
 		oldUserName:           oldUserName,
 		userLoginMustBeDomain: userLoginMustBeDomain,
-		TriggeredAtOrigin:     http.ComposedOrigin(ctx),
+		TriggeredAtOrigin:     http.DomainContext(ctx).Origin(),
 	}
 }
 

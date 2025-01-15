@@ -108,13 +108,13 @@ Please make sure you cover your changes with tests before marking a Pull Request
 
 The code consists of the following parts:
 
-| name            | description                                                     | language                                                                    | where to find                                      |
-| --------------- | --------------------------------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
-| backend         | Service that serves the grpc(-web) and RESTful API              | [go](https://go.dev)                                                        | [API implementation](./internal/api/grpc)          |
-| console         | Frontend the user interacts with after log in             | [Angular](https://angular.io), [Typescript](https://www.typescriptlang.org) | [./console](./console)                             |
+| name            | description                                                        | language                                                                    | where to find                                      |
+| --------------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| backend         | Service that serves the grpc(-web) and RESTful API                 | [go](https://go.dev)                                                        | [API implementation](./internal/api/grpc)          |
+| console         | Frontend the user interacts with after log in                      | [Angular](https://angular.io), [Typescript](https://www.typescriptlang.org) | [./console](./console)                             |
 | login           | Server side rendered frontend the user interacts with during login | [go](https://go.dev), [go templates](https://pkg.go.dev/html/template)      | [./internal/api/ui/login](./internal/api/ui/login) |
-| API definitions | Specifications of the API                                       | [Protobuf](https://developers.google.com/protocol-buffers)                  | [./proto/zitadel](./proto/zitadel)                 |
-| docs            | Project documentation made with docusaurus                      | [Docusaurus](https://docusaurus.io/)                                        | [./docs](./docs)                                   |
+| API definitions | Specifications of the API                                          | [Protobuf](https://developers.google.com/protocol-buffers)                  | [./proto/zitadel](./proto/zitadel)                 |
+| docs            | Project documentation made with docusaurus                         | [Docusaurus](https://docusaurus.io/)                                        | [./docs](./docs)                                   |
 
 Please validate and test the code before you contribute.
 
@@ -129,17 +129,31 @@ We add the label "good first issue" for problems we think are a good starting po
 
 We are committed to creating a welcoming and inclusive community for all developers, regardless of their gender identity or expression. To achieve this, we are actively working to ensure that our contribution guidelines are gender-neutral and use inclusive language.
 
-**Use gender-neutral pronouns**: 
+**Use gender-neutral pronouns**:
 Don't use gender-specific pronouns unless the person you're referring to is actually that gender.
 In particular, don't use he, him, his, she, or her as gender-neutral pronouns, and don't use he/she or (s)he or other such punctuational approaches. Instead, use the singular they.
 
-**Choose gender-neutral alternatives**: 
-Opt for gender-neutral terms instead of gendered ones whenever possible. 
+**Choose gender-neutral alternatives**:
+Opt for gender-neutral terms instead of gendered ones whenever possible.
 Replace "policeman" with "police officer," "manpower" with "workforce," and "businessman" with "entrepreneur" or "businessperson."
 
 **Avoid ableist language**:
 Ableist language includes words or phrases such as crazy, insane, blind to or blind eye to, cripple, dumb, and others.
 Choose alternative words depending on the context.
+
+### Developing ZITADEL with Dev Containers
+
+Follow the instructions provided by your code editor/IDE to initiate the development container. This typically involves opening the "Command Palette" or similar functionality and searching for commands related to "Dev Containers" or "Remote Containers". The quick start guide for VS Code can found [here](https://code.visualstudio.com/docs/devcontainers/containers#_quick-start-open-an-existing-folder-in-a-container)
+
+When you are connected to the container run the following commands to start ZITADEL.
+
+```bash
+make compile && ./zitadel start-from-init --masterkey MasterkeyNeedsToHave32Characters --tlsMode disabled
+```
+
+ZITADEL serves traffic as soon as you can see the following log line:
+
+`INFO[0001] server is listening on [::]:8080`
 
 ### Backend/login
 
@@ -191,16 +205,50 @@ make core_unit_test
 
 #### Run Local Integration Tests
 
-To test the database-connected gRPC API, run PostgreSQL and CockroachDB, set up a ZITADEL instance and run the tests including integration tests:
+Integration tests are run as gRPC clients against a running ZITADEL server binary.
+The server binary is typically [build with coverage enabled](https://go.dev/doc/build-cover).
+It is also possible to run a ZITADEL sever in a debugger and run the integrations tests like that. In order to run the server, a database is required.
+
+The database flavor can **optionally** be set in the environment to `cockroach` or `postgres`. The default is `postgres`.
 
 ```bash
-export INTEGRATION_DB_FLAVOR="postgres" ZITADEL_MASTERKEY="MasterkeyNeedsToHave32Characters"
-docker compose -f internal/integration/config/docker-compose.yaml up --pull always --wait ${INTEGRATION_DB_FLAVOR}
-make core_integration_test
-docker compose -f internal/integration/config/docker-compose.yaml down
+export INTEGRATION_DB_FLAVOR="cockroach"
 ```
 
-Repeat the above with `INTEGRATION_DB_FLAVOR="postgres"`.
+In order to prepare the local system, the following will bring up the database, builds a coverage binary, initializes the database and starts the sever.
+
+```bash
+make core_integration_db_up core_integration_server_start
+```
+
+When this job is finished, you can run individual package integration test through your IDE or command-line. The actual integration test clients reside in the `integration_test` subdirectory of the package they aim to test. Integration test files use the `integration` build tag, in order to be excluded from regular unit tests.
+Because of the server-client split, Go is usually unaware of changes in server code and tends to cache test results. Pas `-count 1` to disable test caching.
+
+Example command to run a single package integration test:
+
+```bash
+go test -count 1 -tags integration ./internal/api/grpc/management/integration_test
+```
+
+To run all available integration tests:
+
+```bash
+make core_integration_test_packages
+```
+
+When you change any ZITADEL server code, be sure to rebuild and restart the server before the next test run.
+
+```bash
+make core_integration_server_stop core_integration_server_start
+```
+
+To cleanup after testing (deletes the database!):
+
+```bash
+make core_integration_server_stop core_integration_db_down
+```
+
+The test binary has the race detector enabled. `core_core_integration_server_stop` checks for any race logs reported by Go and will print them along a `66` exit code when found. Note that the actual race condition may have happened anywhere during the server lifetime, including start, stop or serving gRPC requests during tests.
 
 #### Run Local End-to-End Tests
 
@@ -398,6 +446,13 @@ ZITADEL loads translations from four files:
 
 You may edit the texts in these files or create a new file for additional language support. Make sure you set the locale (ISO 639-1 code) as the name of the new language file.
 Please make sure that the languages within the files remain in their own language, e.g. German must always be `Deutsch.
+If you have added support for a new language, please also ensure that it is added in the list of languages in all the other language files.
+
+You also have to add some changes to the following files: 
+- [Register Local File](./console/src/app/app.module.ts)
+- [Add Supported Language](./console/src/app/utils/language.ts)
+- [Customized Text Docs](./docs/docs/guides/manage/customize/texts.md)
+- [Add language option](./internal/api/ui/login/static/templates/external_not_found_option.html)
 
 ## Want to start ZITADEL?
 

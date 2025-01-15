@@ -3,6 +3,7 @@ package saml
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/dop251/goja"
@@ -16,6 +17,7 @@ import (
 	"github.com/zitadel/zitadel/internal/actions"
 	"github.com/zitadel/zitadel/internal/actions/object"
 	"github.com/zitadel/zitadel/internal/activity"
+	http_utils "github.com/zitadel/zitadel/internal/api/http"
 	"github.com/zitadel/zitadel/internal/api/http/middleware"
 	"github.com/zitadel/zitadel/internal/auth/repository"
 	"github.com/zitadel/zitadel/internal/command"
@@ -32,6 +34,10 @@ var _ provider.EntityStorage = &Storage{}
 var _ provider.IdentityProviderStorage = &Storage{}
 var _ provider.AuthStorage = &Storage{}
 var _ provider.UserStorage = &Storage{}
+
+const (
+	LoginClientHeader = "x-zitadel-login-client"
+)
 
 type Storage struct {
 	certChan                   <-chan interface{}
@@ -51,33 +57,33 @@ type Storage struct {
 	command    *command.Commands
 	query      *query.Queries
 
-	defaultLoginURL string
+	defaultLoginURL   string
+	defaultLoginURLv2 string
 }
 
 func (p *Storage) GetEntityByID(ctx context.Context, entityID string) (*serviceprovider.ServiceProvider, error) {
-	app, err := p.query.AppBySAMLEntityID(ctx, entityID)
+	app, err := p.query.ActiveAppBySAMLEntityID(ctx, entityID)
 	if err != nil {
 		return nil, err
-	}
-	if app.State != domain.AppStateActive {
-		return nil, zerrors.ThrowPreconditionFailed(nil, "SAML-sdaGg", "app is not active")
 	}
 	return serviceprovider.NewServiceProvider(
 		app.ID,
 		&serviceprovider.Config{
 			Metadata: app.SAMLConfig.Metadata,
 		},
-		p.defaultLoginURL,
+		func(id string) string {
+			if strings.HasPrefix(id, command.IDPrefixV2) {
+				return p.defaultLoginURLv2 + id
+			}
+			return p.defaultLoginURL + id
+		},
 	)
 }
 
 func (p *Storage) GetEntityIDByAppID(ctx context.Context, appID string) (string, error) {
-	app, err := p.query.AppByID(ctx, appID)
+	app, err := p.query.AppByID(ctx, appID, true)
 	if err != nil {
 		return "", err
-	}
-	if app.State != domain.AppStateActive {
-		return "", zerrors.ThrowPreconditionFailed(nil, "SAML-sdaGg", "app is not active")
 	}
 	return app.SAMLConfig.EntityID, nil
 }
@@ -87,18 +93,50 @@ func (p *Storage) Health(context.Context) error {
 }
 
 func (p *Storage) GetCA(ctx context.Context) (*key.CertificateAndKey, error) {
-	return p.GetCertificateAndKey(ctx, domain.KeyUsageSAMLCA)
+	return p.GetCertificateAndKey(ctx, crypto.KeyUsageSAMLCA)
 }
 
 func (p *Storage) GetMetadataSigningKey(ctx context.Context) (*key.CertificateAndKey, error) {
-	return p.GetCertificateAndKey(ctx, domain.KeyUsageSAMLMetadataSigning)
+	return p.GetCertificateAndKey(ctx, crypto.KeyUsageSAMLMetadataSigning)
 }
 
 func (p *Storage) GetResponseSigningKey(ctx context.Context) (*key.CertificateAndKey, error) {
-	return p.GetCertificateAndKey(ctx, domain.KeyUsageSAMLResponseSinging)
+	return p.GetCertificateAndKey(ctx, crypto.KeyUsageSAMLResponseSinging)
 }
 
 func (p *Storage) CreateAuthRequest(ctx context.Context, req *samlp.AuthnRequestType, acsUrl, protocolBinding, relayState, applicationID string) (_ models.AuthRequestInt, err error) {
+	ctx, span := tracing.NewSpan(ctx)
+	defer func() { span.EndWithError(err) }()
+
+	headers, _ := http_utils.HeadersFromCtx(ctx)
+	if loginClient := headers.Get(LoginClientHeader); loginClient != "" {
+		return p.createAuthRequestLoginClient(ctx, req, acsUrl, protocolBinding, relayState, applicationID, loginClient)
+	}
+	return p.createAuthRequest(ctx, req, acsUrl, protocolBinding, relayState, applicationID)
+}
+
+func (p *Storage) createAuthRequestLoginClient(ctx context.Context, req *samlp.AuthnRequestType, acsUrl, protocolBinding, relayState, applicationID, loginClient string) (_ models.AuthRequestInt, err error) {
+	ctx, span := tracing.NewSpan(ctx)
+	defer func() { span.EndWithError(err) }()
+	samlRequest := &command.SAMLRequest{
+		ApplicationID: applicationID,
+		ACSURL:        acsUrl,
+		RelayState:    relayState,
+		RequestID:     req.Id,
+		Binding:       protocolBinding,
+		Issuer:        req.Issuer.Text,
+		Destination:   req.Destination,
+		LoginClient:   loginClient,
+	}
+
+	aar, err := p.command.AddSAMLRequest(ctx, samlRequest)
+	if err != nil {
+		return nil, err
+	}
+	return &AuthRequestV2{aar}, nil
+}
+
+func (p *Storage) createAuthRequest(ctx context.Context, req *samlp.AuthnRequestType, acsUrl, protocolBinding, relayState, applicationID string) (_ models.AuthRequestInt, err error) {
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
 	userAgentID, ok := middleware.UserAgentIDFromCtx(ctx)
@@ -119,6 +157,15 @@ func (p *Storage) CreateAuthRequest(ctx context.Context, req *samlp.AuthnRequest
 func (p *Storage) AuthRequestByID(ctx context.Context, id string) (_ models.AuthRequestInt, err error) {
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
+
+	if strings.HasPrefix(id, command.IDPrefixV2) {
+		req, err := p.command.GetCurrentSAMLRequest(ctx, id)
+		if err != nil {
+			return nil, err
+		}
+		return &AuthRequestV2{req}, nil
+	}
+
 	userAgentID, ok := middleware.UserAgentIDFromCtx(ctx)
 	if !ok {
 		return nil, zerrors.ThrowPreconditionFailed(nil, "SAML-D3g21", "no user agent id")
@@ -136,6 +183,9 @@ func (p *Storage) SetUserinfoWithUserID(ctx context.Context, applicationID strin
 	user, err := p.query.GetUserByID(ctx, true, userID)
 	if err != nil {
 		return err
+	}
+	if user.State != domain.UserStateActive {
+		return zerrors.ThrowPreconditionFailed(nil, "SAML-S3gFd", "Errors.User.NotActive")
 	}
 
 	userGrants, err := p.getGrants(ctx, userID, applicationID)
@@ -162,6 +212,9 @@ func (p *Storage) SetUserinfoWithLoginName(ctx context.Context, userinfo models.
 	user, err := p.query.GetUserByLoginName(ctx, true, loginName)
 	if err != nil {
 		return err
+	}
+	if user.State != domain.UserStateActive {
+		return zerrors.ThrowPreconditionFailed(nil, "SAML-FJ262", "Errors.User.NotActive")
 	}
 
 	setUserinfo(user, userinfo, attributes, map[string]*customAttribute{})
@@ -330,10 +383,15 @@ func (p *Storage) getGrants(ctx context.Context, userID, applicationID string) (
 	if err != nil {
 		return nil, err
 	}
+	activeQuery, err := query.NewUserGrantStateQuery(domain.UserGrantStateActive)
+	if err != nil {
+		return nil, err
+	}
 	return p.query.UserGrants(ctx, &query.UserGrantsQueries{
 		Queries: []query.SearchQuery{
 			projectQuery,
 			userIDQuery,
+			activeQuery,
 		},
 	}, true)
 }

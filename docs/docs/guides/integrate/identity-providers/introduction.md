@@ -131,9 +131,9 @@ In the guides below, some of which utilize the Generic OIDC or SAML templates fo
 
 If ZITADEL doesn't offer a specific template for your Identity Provider (IdP) and your IdP is fully compliant with OpenID Connect (OIDC), you have the option to use the generic OIDC provider configuration.
 
-For those utilizing a SAML Service Provider, the SAML Service Provider option is available. You can learn how to set up a SAML Service Provider with our [MockSAML example](https://zitadel.com/docs/guides/integrate/identity-providers/mocksaml).
+For those utilizing a SAML Service Provider, the SAML Service Provider option is available. You can learn how to set up a SAML Service Provider with our [MockSAML example](/docs/guides/integrate/identity-providers/mocksaml).
 
-Should you wish to transition from a generic OIDC provider to Entra ID (formerly Azure Active Directory) or Google, consider following this [guide](https://zitadel.com/docs/guides/integrate/identity-providers/migrate).
+Should you wish to transition from a generic OIDC provider to Entra ID (formerly Azure Active Directory) or Google, consider following this [guide](/docs/guides/integrate/identity-providers/migrate).
 
 
 
@@ -147,9 +147,11 @@ When configuring external IdP templates in ZITADEL, several common settings enab
 
 - **Automatic update**: This feature, when activated, allows ZITADEL to automatically update a user's profile information whenever changes are detected in the user's account on the external IdP. For example, if a user changes their last name in their Google or Microsoft account, ZITADEL will reflect this update in the user's account upon their next login.
 
-- **Account creation allowed**: Determines whether new user accounts can be created in ZITADEL through the external IdP authentication process. Enabling this setting is crucial for allowing users who are new to your application to register and create accounts seamlessly via their existing external IdP accounts.
+- **Account creation allowed (manually)**: Determines whether new user accounts can be created in ZITADEL through the external IdP authentication process. Enabling this setting is crucial for allowing users who are new to your application to register and create accounts seamlessly via their existing external IdP accounts. However, if you rely on the **automatic creation** and want to prevent users to manually create their accounts or edit information during the automatic process, you need to disable this option.
 
-- **Account linking allowed**: Enables existing ZITADEL accounts to be linked with identities from external IdPs. It requires that a linkable ZITADEL account already exists for the user attempting to log in with an external IdP. Account linking is beneficial for users who wish to associate multiple login methods with their ZITADEL account, providing flexibility and convenience in how they access your application.
+- **Account linking allowed (manually)**: Enables existing ZITADEL accounts to be linked with identities from external IdPs. It requires that a linkable ZITADEL account already exists for the user attempting to log in with an external IdP. Account linking is beneficial for users who wish to associate multiple login methods with their ZITADEL account, providing flexibility and convenience in how they access your application. However, if you rely on an **automatic linking option** and want to prevent users to manually link their accounts, you need to disable this option.
+
+- **Automatic linking options**: Enables existing ZITADEL accounts to be linked with identities from external IdPs. If not disabled, ZITADEL will check for an existing account with the configured criteria (username or email) and prompt the user to link the account.
 
 
 
@@ -176,6 +178,6 @@ Deciding whether to configure an external Identity Provider (IdP) at the organiz
 
 ## References
 
-- [Identity brokering in ZITADEL](https://zitadel.com/docs/concepts/features/identity-brokering)
-- [The ZITADEL API reference for managing external IdPs](https://zitadel.com/docs/category/apis/resources/admin/identity-providers)
-- [Handle external logins in a custom login UI](https://zitadel.com/docs/guides/integrate/login-ui/external-login)
+- [Identity brokering in ZITADEL](/docs/concepts/features/identity-brokering)
+- [The ZITADEL API reference for managing external IdPs](/docs/apis/resources/admin/identity-providers)
+- [Handle external logins in a custom login UI](/docs/guides/integrate/login-ui/external-login)

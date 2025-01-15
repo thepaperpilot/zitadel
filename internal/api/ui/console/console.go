@@ -21,12 +21,17 @@ import (
 	"github.com/zitadel/zitadel/internal/api/authz"
 	http_util "github.com/zitadel/zitadel/internal/api/http"
 	"github.com/zitadel/zitadel/internal/api/http/middleware"
+	console_path "github.com/zitadel/zitadel/internal/api/ui/console/path"
 )
 
 type Config struct {
 	ShortCache            middleware.CacheConfig
 	LongCache             middleware.CacheConfig
 	InstanceManagementURL string
+	PostHog               struct {
+		Token string
+		URL   string
+	}
 }
 
 type spaHandler struct {
@@ -40,7 +45,6 @@ var (
 
 const (
 	envRequestPath = "/assets/environment.json"
-	HandlerPrefix  = "/ui/console"
 )
 
 var (
@@ -56,7 +60,7 @@ var (
 )
 
 func LoginHintLink(origin, username string) string {
-	return origin + HandlerPrefix + "?login_hint=" + username
+	return origin + console_path.HandlerPrefix + "?login_hint=" + username
 }
 
 func (i *spaHandler) Open(name string) (http.File, error) {
@@ -117,7 +121,7 @@ func Start(config Config, externalSecure bool, issuer op.IssuerFromRequest, call
 			return
 		}
 		limited := limitingAccessInterceptor.Limit(w, r)
-		environmentJSON, err := createEnvironmentJSON(url, issuer(r), instance.ConsoleClientID(), customerPortal, instanceMgmtURL, limited)
+		environmentJSON, err := createEnvironmentJSON(url, issuer(r), instance.ConsoleClientID(), customerPortal, instanceMgmtURL, config.PostHog.URL, config.PostHog.Token, limited)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("unable to marshal env for console: %v", err), http.StatusInternalServerError)
 			return
@@ -150,13 +154,15 @@ func csp() *middleware.CSP {
 	return &csp
 }
 
-func createEnvironmentJSON(api, issuer, clientID, customerPortal, instanceMgmtUrl string, exhausted bool) ([]byte, error) {
+func createEnvironmentJSON(api, issuer, clientID, customerPortal, instanceMgmtUrl, postHogURL, postHogToken string, exhausted bool) ([]byte, error) {
 	environment := struct {
 		API                   string `json:"api,omitempty"`
 		Issuer                string `json:"issuer,omitempty"`
 		ClientID              string `json:"clientid,omitempty"`
 		CustomerPortal        string `json:"customer_portal,omitempty"`
 		InstanceManagementURL string `json:"instance_management_url,omitempty"`
+		PostHogURL            string `json:"posthog_url,omitempty"`
+		PostHogToken          string `json:"posthog_token,omitempty"`
 		Exhausted             bool   `json:"exhausted,omitempty"`
 	}{
 		API:                   api,
@@ -164,6 +170,8 @@ func createEnvironmentJSON(api, issuer, clientID, customerPortal, instanceMgmtUr
 		ClientID:              clientID,
 		CustomerPortal:        customerPortal,
 		InstanceManagementURL: instanceMgmtUrl,
+		PostHogURL:            postHogURL,
+		PostHogToken:          postHogToken,
 		Exhausted:             exhausted,
 	}
 	return json.Marshal(environment)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/zitadel/logging"
 
 	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/api/call"
@@ -102,7 +103,10 @@ type SecretGeneratorSearchQueries struct {
 	Queries []SearchQuery
 }
 
-func (q *Queries) InitEncryptionGenerator(ctx context.Context, generatorType domain.SecretGeneratorType, algorithm crypto.EncryptionAlgorithm) (crypto.Generator, error) {
+func (q *Queries) InitEncryptionGenerator(ctx context.Context, generatorType domain.SecretGeneratorType, algorithm crypto.EncryptionAlgorithm) (_ crypto.Generator, err error) {
+	ctx, span := tracing.NewSpan(ctx)
+	defer func() { span.EndWithError(err) }()
+
 	generatorConfig, err := q.SecretGeneratorByType(ctx, generatorType)
 	if err != nil {
 		return nil, err
@@ -122,10 +126,11 @@ func (q *Queries) SecretGeneratorByType(ctx context.Context, generatorType domai
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
 
+	instanceID := authz.GetInstance(ctx).InstanceID()
 	stmt, scan := prepareSecretGeneratorQuery(ctx, q.client)
 	query, args, err := stmt.Where(sq.Eq{
 		SecretGeneratorColumnGeneratorType.identifier(): generatorType,
-		SecretGeneratorColumnInstanceID.identifier():    authz.GetInstance(ctx).InstanceID(),
+		SecretGeneratorColumnInstanceID.identifier():    instanceID,
 	}).ToSql()
 	if err != nil {
 		return nil, zerrors.ThrowInternal(err, "QUERY-3k99f", "Errors.Query.SQLStatment")
@@ -135,6 +140,7 @@ func (q *Queries) SecretGeneratorByType(ctx context.Context, generatorType domai
 		generator, err = scan(row)
 		return err
 	}, query, args...)
+	logging.OnError(err).WithField("type", generatorType).WithField("instance_id", instanceID).Error("secret generator by type")
 	return generator, err
 }
 

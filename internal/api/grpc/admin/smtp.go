@@ -5,6 +5,7 @@ import (
 
 	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/api/grpc/object"
+	"github.com/zitadel/zitadel/internal/notification/channels/smtp"
 	admin_pb "github.com/zitadel/zitadel/pkg/grpc/admin"
 )
 
@@ -19,10 +20,7 @@ func (s *Server) GetSMTPConfig(ctx context.Context, req *admin_pb.GetSMTPConfigR
 }
 
 func (s *Server) GetSMTPConfigById(ctx context.Context, req *admin_pb.GetSMTPConfigByIdRequest) (*admin_pb.GetSMTPConfigByIdResponse, error) {
-	instanceID := authz.GetInstance(ctx).InstanceID()
-	resourceOwner := instanceID // Will be replaced when orgs have smtp configs
-
-	smtp, err := s.query.SMTPConfigByID(ctx, instanceID, resourceOwner, req.Id)
+	smtp, err := s.query.SMTPConfigByID(ctx, authz.GetInstance(ctx).InstanceID(), req.Id)
 	if err != nil {
 		return nil, err
 	}
@@ -32,29 +30,23 @@ func (s *Server) GetSMTPConfigById(ctx context.Context, req *admin_pb.GetSMTPCon
 }
 
 func (s *Server) AddSMTPConfig(ctx context.Context, req *admin_pb.AddSMTPConfigRequest) (*admin_pb.AddSMTPConfigResponse, error) {
-	id, details, err := s.command.AddSMTPConfig(ctx, authz.GetInstance(ctx).InstanceID(), AddSMTPToConfig(req))
-	if err != nil {
+	config := addSMTPToConfig(ctx, req)
+	if err := s.command.AddSMTPConfig(ctx, config); err != nil {
 		return nil, err
 	}
 	return &admin_pb.AddSMTPConfigResponse{
-		Details: object.ChangeToDetailsPb(
-			details.Sequence,
-			details.EventDate,
-			details.ResourceOwner),
-		Id: id,
+		Details: object.DomainToChangeDetailsPb(config.Details),
+		Id:      config.ID,
 	}, nil
 }
 
 func (s *Server) UpdateSMTPConfig(ctx context.Context, req *admin_pb.UpdateSMTPConfigRequest) (*admin_pb.UpdateSMTPConfigResponse, error) {
-	details, err := s.command.ChangeSMTPConfig(ctx, authz.GetInstance(ctx).InstanceID(), req.Id, UpdateSMTPToConfig(req))
-	if err != nil {
+	config := updateSMTPToConfig(ctx, req)
+	if err := s.command.ChangeSMTPConfig(ctx, config); err != nil {
 		return nil, err
 	}
 	return &admin_pb.UpdateSMTPConfigResponse{
-		Details: object.ChangeToDetailsPb(
-			details.Sequence,
-			details.EventDate,
-			details.ResourceOwner),
+		Details: object.DomainToChangeDetailsPb(config.Details),
 	}, nil
 }
 
@@ -64,10 +56,7 @@ func (s *Server) RemoveSMTPConfig(ctx context.Context, req *admin_pb.RemoveSMTPC
 		return nil, err
 	}
 	return &admin_pb.RemoveSMTPConfigResponse{
-		Details: object.ChangeToDetailsPb(
-			details.Sequence,
-			details.EventDate,
-			details.ResourceOwner),
+		Details: object.DomainToChangeDetailsPb(details),
 	}, nil
 }
 
@@ -77,10 +66,7 @@ func (s *Server) UpdateSMTPConfigPassword(ctx context.Context, req *admin_pb.Upd
 		return nil, err
 	}
 	return &admin_pb.UpdateSMTPConfigPasswordResponse{
-		Details: object.ChangeToDetailsPb(
-			details.Sequence,
-			details.EventDate,
-			details.ResourceOwner),
+		Details: object.DomainToChangeDetailsPb(details),
 	}, nil
 }
 
@@ -100,19 +86,11 @@ func (s *Server) ListSMTPConfigs(ctx context.Context, req *admin_pb.ListSMTPConf
 }
 
 func (s *Server) ActivateSMTPConfig(ctx context.Context, req *admin_pb.ActivateSMTPConfigRequest) (*admin_pb.ActivateSMTPConfigResponse, error) {
-	// Get the ID of current SMTP active provider if any
-	currentActiveProviderID := ""
-	smtp, err := s.query.SMTPConfigActive(ctx, authz.GetInstance(ctx).InstanceID())
-	if err == nil {
-		currentActiveProviderID = smtp.ID
-	}
-
-	result, err := s.command.ActivateSMTPConfig(ctx, authz.GetInstance(ctx).InstanceID(), req.Id, currentActiveProviderID)
+	result, err := s.command.ActivateSMTPConfig(ctx, authz.GetInstance(ctx).InstanceID(), req.Id)
 	if err != nil {
 		return nil, err
 
 	}
-
 	return &admin_pb.ActivateSMTPConfigResponse{
 		Details: object.DomainToAddDetailsPb(result),
 	}, nil
@@ -127,4 +105,30 @@ func (s *Server) DeactivateSMTPConfig(ctx context.Context, req *admin_pb.Deactiv
 	return &admin_pb.DeactivateSMTPConfigResponse{
 		Details: object.DomainToAddDetailsPb(result),
 	}, nil
+}
+
+func (s *Server) TestSMTPConfigById(ctx context.Context, req *admin_pb.TestSMTPConfigByIdRequest) (*admin_pb.TestSMTPConfigByIdResponse, error) {
+	err := s.command.TestSMTPConfigById(ctx, authz.GetInstance(ctx).InstanceID(), req.Id, req.ReceiverAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &admin_pb.TestSMTPConfigByIdResponse{}, nil
+}
+
+func (s *Server) TestSMTPConfig(ctx context.Context, req *admin_pb.TestSMTPConfigRequest) (*admin_pb.TestSMTPConfigResponse, error) {
+	config := smtp.Config{}
+	config.Tls = req.Tls
+	config.From = req.SenderAddress
+	config.FromName = req.SenderName
+	config.SMTP.Host = req.Host
+	config.SMTP.User = req.User
+	config.SMTP.Password = req.Password
+
+	err := s.command.TestSMTPConfig(ctx, authz.GetInstance(ctx).InstanceID(), req.Id, req.ReceiverAddress, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &admin_pb.TestSMTPConfigResponse{}, nil
 }

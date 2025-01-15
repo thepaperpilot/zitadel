@@ -4,24 +4,19 @@ import (
 	"context"
 
 	"github.com/muhlemmer/gu"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/zitadel/zitadel/internal/api/authz"
 	"github.com/zitadel/zitadel/internal/api/grpc/object/v2"
 	"github.com/zitadel/zitadel/internal/domain"
 	"github.com/zitadel/zitadel/internal/query"
 	"github.com/zitadel/zitadel/internal/zerrors"
-	user "github.com/zitadel/zitadel/pkg/grpc/user/v2beta"
+	"github.com/zitadel/zitadel/pkg/grpc/user/v2"
 )
 
 func (s *Server) GetUserByID(ctx context.Context, req *user.GetUserByIDRequest) (_ *user.GetUserByIDResponse, err error) {
-	resp, err := s.query.GetUserByID(ctx, true, req.GetUserId())
+	resp, err := s.query.GetUserByIDWithPermission(ctx, true, req.GetUserId(), s.checkPermission)
 	if err != nil {
 		return nil, err
-	}
-	if authz.GetCtxData(ctx).UserID != req.GetUserId() {
-		if err := s.checkPermission(ctx, domain.PermissionUserRead, resp.ResourceOwner, req.GetUserId()); err != nil {
-			return nil, err
-		}
 	}
 	return &user.GetUserByIDResponse{
 		Details: object.DomainToDetailsPb(&domain.ObjectDetails{
@@ -38,11 +33,10 @@ func (s *Server) ListUsers(ctx context.Context, req *user.ListUsersRequest) (*us
 	if err != nil {
 		return nil, err
 	}
-	res, err := s.query.SearchUsers(ctx, queries)
+	res, err := s.query.SearchUsers(ctx, queries, s.checkPermission)
 	if err != nil {
 		return nil, err
 	}
-	res.RemoveNoPermission(ctx, s.checkPermission)
 	return &user.ListUsersResponse{
 		Result:  UsersToPb(res.Users, s.assetAPIPrefix(ctx)),
 		Details: object.ToListDetails(res.SearchResponse),
@@ -59,7 +53,12 @@ func UsersToPb(users []*query.User, assetPrefix string) []*user.User {
 
 func userToPb(userQ *query.User, assetPrefix string) *user.User {
 	return &user.User{
-		UserId:             userQ.ID,
+		UserId: userQ.ID,
+		Details: object.DomainToDetailsPb(&domain.ObjectDetails{
+			Sequence:      userQ.Sequence,
+			EventDate:     userQ.ChangeDate,
+			ResourceOwner: userQ.ResourceOwner,
+		}),
 		State:              userStateToPb(userQ.State),
 		Username:           userQ.Username,
 		LoginNames:         userQ.LoginNames,
@@ -83,6 +82,10 @@ func userTypeToPb(userQ *query.User, assetPrefix string) user.UserType {
 }
 
 func humanToPb(userQ *query.Human, assetPrefix, owner string) *user.HumanUser {
+	var passwordChanged *timestamppb.Timestamp
+	if !userQ.PasswordChanged.IsZero() {
+		passwordChanged = timestamppb.New(userQ.PasswordChanged)
+	}
 	return &user.HumanUser{
 		Profile: &user.HumanProfile{
 			GivenName:         userQ.FirstName,
@@ -102,6 +105,7 @@ func humanToPb(userQ *query.Human, assetPrefix, owner string) *user.HumanUser {
 			IsVerified: userQ.IsPhoneVerified,
 		},
 		PasswordChangeRequired: userQ.PasswordChangeRequired,
+		PasswordChanged:        passwordChanged,
 	}
 }
 
@@ -234,6 +238,8 @@ func userQueryToQuery(query *user.SearchQuery, level uint8) (query.SearchQuery, 
 		return displayNameQueryToQuery(q.DisplayNameQuery)
 	case *user.SearchQuery_EmailQuery:
 		return emailQueryToQuery(q.EmailQuery)
+	case *user.SearchQuery_PhoneQuery:
+		return phoneQueryToQuery(q.PhoneQuery)
 	case *user.SearchQuery_StateQuery:
 		return stateQueryToQuery(q.StateQuery)
 	case *user.SearchQuery_TypeQuery:
@@ -279,6 +285,10 @@ func displayNameQueryToQuery(q *user.DisplayNameQuery) (query.SearchQuery, error
 
 func emailQueryToQuery(q *user.EmailQuery) (query.SearchQuery, error) {
 	return query.NewUserEmailSearchQuery(q.EmailAddress, object.TextMethodToQuery(q.Method))
+}
+
+func phoneQueryToQuery(q *user.PhoneQuery) (query.SearchQuery, error) {
+	return query.NewUserPhoneSearchQuery(q.Number, object.TextMethodToQuery(q.Method))
 }
 
 func stateQueryToQuery(q *user.StateQuery) (query.SearchQuery, error) {

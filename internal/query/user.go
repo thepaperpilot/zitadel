@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"errors"
+	"slices"
 	"strings"
 	"time"
 
@@ -53,6 +54,7 @@ type Human struct {
 	Phone                  domain.PhoneNumber  `json:"phone,omitempty"`
 	IsPhoneVerified        bool                `json:"is_phone_verified,omitempty"`
 	PasswordChangeRequired bool                `json:"password_change_required,omitempty"`
+	PasswordChanged        time.Time           `json:"password_changed,omitempty"`
 }
 
 type Profile struct {
@@ -122,27 +124,12 @@ type NotifyUser struct {
 	PasswordSet        bool
 }
 
-func (u *Users) RemoveNoPermission(ctx context.Context, permissionCheck domain.PermissionCheck) {
-	removableIndexes := make([]int, 0)
-	for i := range u.Users {
-		ctxData := authz.GetCtxData(ctx)
-		if ctxData.UserID != u.Users[i].ID {
-			if err := permissionCheck(ctx, domain.PermissionUserRead, u.Users[i].ResourceOwner, u.Users[i].ID); err != nil {
-				removableIndexes = append(removableIndexes, i)
-			}
-		}
-	}
-	removed := 0
-	for _, removeIndex := range removableIndexes {
-		u.Users = removeUser(u.Users, removeIndex-removed)
-		removed++
-	}
-	// reset count as some users could be removed
-	u.SearchResponse.Count = uint64(len(u.Users))
-}
-
-func removeUser(slice []*User, s int) []*User {
-	return append(slice[:s], slice[s+1:]...)
+func usersCheckPermission(ctx context.Context, users *Users, permissionCheck domain.PermissionCheck) {
+	users.Users = slices.DeleteFunc(users.Users,
+		func(user *User) bool {
+			return userCheckPermission(ctx, user.ResourceOwner, user.ID, permissionCheck) != nil
+		},
+	)
 }
 
 type UserSearchQueries struct {
@@ -280,6 +267,10 @@ var (
 		name:  projection.HumanPasswordChangeRequired,
 		table: humanTable,
 	}
+	HumanPasswordChangedCol = Column{
+		name:  projection.HumanPasswordChanged,
+		table: humanTable,
+	}
 )
 
 var (
@@ -349,6 +340,27 @@ var (
 
 //go:embed user_by_id.sql
 var userByIDQuery string
+
+func userCheckPermission(ctx context.Context, resourceOwner string, userID string, permissionCheck domain.PermissionCheck) error {
+	ctxData := authz.GetCtxData(ctx)
+	if ctxData.UserID != userID {
+		if err := permissionCheck(ctx, domain.PermissionUserRead, resourceOwner, userID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (q *Queries) GetUserByIDWithPermission(ctx context.Context, shouldTriggerBulk bool, userID string, permissionCheck domain.PermissionCheck) (*User, error) {
+	user, err := q.GetUserByID(ctx, shouldTriggerBulk, userID)
+	if err != nil {
+		return nil, err
+	}
+	if err := userCheckPermission(ctx, user.ResourceOwner, user.ID, permissionCheck); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
 
 func (q *Queries) GetUserByID(ctx context.Context, shouldTriggerBulk bool, userID string) (user *User, err error) {
 	ctx, span := tracing.NewSpan(ctx)
@@ -592,7 +604,18 @@ func (q *Queries) GetNotifyUser(ctx context.Context, shouldTriggered bool, queri
 	return user, err
 }
 
-func (q *Queries) SearchUsers(ctx context.Context, queries *UserSearchQueries) (users *Users, err error) {
+func (q *Queries) SearchUsers(ctx context.Context, queries *UserSearchQueries, permissionCheck domain.PermissionCheck) (*Users, error) {
+	users, err := q.searchUsers(ctx, queries)
+	if err != nil {
+		return nil, err
+	}
+	if permissionCheck != nil {
+		usersCheckPermission(ctx, users, permissionCheck)
+	}
+	return users, nil
+}
+
+func (q *Queries) searchUsers(ctx context.Context, queries *UserSearchQueries) (users *Users, err error) {
 	ctx, span := tracing.NewSpan(ctx)
 	defer func() { span.EndWithError(err) }()
 
@@ -822,6 +845,7 @@ func scanUser(row *sql.Row) (*User, error) {
 	phone := sql.NullString{}
 	isPhoneVerified := sql.NullBool{}
 	passwordChangeRequired := sql.NullBool{}
+	passwordChanged := sql.NullTime{}
 
 	machineID := sql.NullString{}
 	name := sql.NullString{}
@@ -853,6 +877,7 @@ func scanUser(row *sql.Row) (*User, error) {
 		&phone,
 		&isPhoneVerified,
 		&passwordChangeRequired,
+		&passwordChanged,
 		&machineID,
 		&name,
 		&description,
@@ -884,6 +909,7 @@ func scanUser(row *sql.Row) (*User, error) {
 			Phone:                  domain.PhoneNumber(phone.String),
 			IsPhoneVerified:        isPhoneVerified.Bool,
 			PasswordChangeRequired: passwordChangeRequired.Bool,
+			PasswordChanged:        passwordChanged.Time,
 		}
 	} else if machineID.Valid {
 		u.Machine = &Machine{
@@ -929,6 +955,7 @@ func prepareUserQuery(ctx context.Context, db prepareDatabase) (sq.SelectBuilder
 			HumanPhoneCol.identifier(),
 			HumanIsPhoneVerifiedCol.identifier(),
 			HumanPasswordChangeRequiredCol.identifier(),
+			HumanPasswordChangedCol.identifier(),
 			MachineUserIDCol.identifier(),
 			MachineNameCol.identifier(),
 			MachineDescriptionCol.identifier(),
@@ -1316,6 +1343,7 @@ func prepareUsersQuery(ctx context.Context, db prepareDatabase) (sq.SelectBuilde
 			HumanPhoneCol.identifier(),
 			HumanIsPhoneVerifiedCol.identifier(),
 			HumanPasswordChangeRequiredCol.identifier(),
+			HumanPasswordChangedCol.identifier(),
 			MachineUserIDCol.identifier(),
 			MachineNameCol.identifier(),
 			MachineDescriptionCol.identifier(),
@@ -1355,6 +1383,7 @@ func prepareUsersQuery(ctx context.Context, db prepareDatabase) (sq.SelectBuilde
 				phone := sql.NullString{}
 				isPhoneVerified := sql.NullBool{}
 				passwordChangeRequired := sql.NullBool{}
+				passwordChanged := sql.NullTime{}
 
 				machineID := sql.NullString{}
 				name := sql.NullString{}
@@ -1386,6 +1415,7 @@ func prepareUsersQuery(ctx context.Context, db prepareDatabase) (sq.SelectBuilde
 					&phone,
 					&isPhoneVerified,
 					&passwordChangeRequired,
+					&passwordChanged,
 					&machineID,
 					&name,
 					&description,
@@ -1416,6 +1446,7 @@ func prepareUsersQuery(ctx context.Context, db prepareDatabase) (sq.SelectBuilde
 						Phone:                  domain.PhoneNumber(phone.String),
 						IsPhoneVerified:        isPhoneVerified.Bool,
 						PasswordChangeRequired: passwordChangeRequired.Bool,
+						PasswordChanged:        passwordChanged.Time,
 					}
 				} else if machineID.Valid {
 					u.Machine = &Machine{

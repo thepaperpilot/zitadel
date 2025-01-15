@@ -13,8 +13,6 @@
         <img alt="GitHub Workflow Status (with event)" src="https://img.shields.io/github/actions/workflow/status/zitadel/zitadel/build.yml?event=pull_request"></a>
     <a href="https://zitadel.com/docs/support/software-release-cycles-support" alt="Release">
         <img src="https://badgen.net/github/release/zitadel/zitadel/stable" /></a>
-    <a href="https://github.com/zitadel/zitadel/releases" alt="Release">
-        <img alt="Dynamic YAML Badge" src="https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fzitadel%2Fzitadel%2Fmain%2Frelease-channels.yaml&query=%24.stable&label=stable"></a>
     <a href="https://goreportcard.com/report/github.com/zitadel/zitadel" alt="Go Report Card">
         <img src="https://goreportcard.com/badge/github.com/zitadel/zitadel" /></a>
     <a href="https://codecov.io/gh/zitadel/zitadel" alt="Code Coverage">
@@ -30,6 +28,9 @@
         <img src="./docs/static/logos/oidc-cert.png" /></a>
 </p>
 
+|Community Meeting|
+|------------------|
+|ZITADEL holds bi-weekly community calls. To join the community calls or to watch previous meeting notes and recordings, please visit the [meeting schedule](https://github.com/zitadel/zitadel/blob/main/MEETING_SCHEDULE.md).|
 
 Are you searching for a user management tool that is quickly set up like Auth0 and open source like Keycloak?
 
@@ -77,9 +78,18 @@ See all guides [here](https://zitadel.com/docs/self-hosting/deploy/overview)
 ### Setup ZITADEL Cloud (SaaS)
 
 If you want to experience a hands-free ZITADEL, you should use [ZITADEL Cloud](https://zitadel.com).
+Available data regions are: 
+* 🇺🇸 United States
+* 🇪🇺 European Union
+* 🇦🇺 Australia
+* 🇨🇭 Switzerland
 
 ZITADEL Cloud comes with a free tier, providing you with all the same features as the open-source version.
 Learn more about the [pay-as-you-go pricing](https://zitadel.com/pricing).
+
+## Adopters
+
+We are grateful to the organizations and individuals who are using ZITADEL. If you are using ZITADEL, please consider adding your name to our [Adopters list](./ADOPTERS.md) by submitting a pull request.
 
 ### Example applications
 
@@ -146,11 +156,12 @@ Deployment
 - [Zero Downtime Updates](https://zitadel.com/docs/concepts/architecture/solution#zero-downtime-updates)
 - [High scalability](https://zitadel.com/docs/self-hosting/manage/production)
 
-Track upcoming features on our [roadmap](https://zitadel.com/roadmap).
+Track upcoming features on our [roadmap](https://zitadel.com/roadmap) and follow our [changelog](https://zitadel.com/changelog) for recent updates.
 
 ## How To Contribute
 
-Find details about how you can contribute in our [Contribution Guide](./CONTRIBUTING.md)
+Find details about how you can contribute in our [Contribution Guide](./CONTRIBUTING.md).
+Join our [Discord Chat](https://zitadel.com/chat) to get help.
 
 ## Contributors
 

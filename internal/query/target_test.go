@@ -9,59 +9,60 @@ import (
 	"testing"
 	"time"
 
+	"github.com/zitadel/zitadel/internal/crypto"
 	"github.com/zitadel/zitadel/internal/domain"
 	"github.com/zitadel/zitadel/internal/zerrors"
 )
 
 var (
-	prepareTargetsStmt = `SELECT projections.targets.id,` +
-		` projections.targets.change_date,` +
-		` projections.targets.resource_owner,` +
-		` projections.targets.sequence,` +
-		` projections.targets.name,` +
-		` projections.targets.target_type,` +
-		` projections.targets.timeout,` +
-		` projections.targets.url,` +
-		` projections.targets.async,` +
-		` projections.targets.interrupt_on_error,` +
+	prepareTargetsStmt = `SELECT projections.targets2.id,` +
+		` projections.targets2.creation_date,` +
+		` projections.targets2.change_date,` +
+		` projections.targets2.resource_owner,` +
+		` projections.targets2.name,` +
+		` projections.targets2.target_type,` +
+		` projections.targets2.timeout,` +
+		` projections.targets2.endpoint,` +
+		` projections.targets2.interrupt_on_error,` +
+		` projections.targets2.signing_key,` +
 		` COUNT(*) OVER ()` +
-		` FROM projections.targets`
+		` FROM projections.targets2`
 	prepareTargetsCols = []string{
 		"id",
+		"creation_date",
 		"change_date",
 		"resource_owner",
-		"sequence",
 		"name",
 		"target_type",
 		"timeout",
-		"url",
-		"async",
+		"endpoint",
 		"interrupt_on_error",
+		"signing_key",
 		"count",
 	}
 
-	prepareTargetStmt = `SELECT projections.targets.id,` +
-		` projections.targets.change_date,` +
-		` projections.targets.resource_owner,` +
-		` projections.targets.sequence,` +
-		` projections.targets.name,` +
-		` projections.targets.target_type,` +
-		` projections.targets.timeout,` +
-		` projections.targets.url,` +
-		` projections.targets.async,` +
-		` projections.targets.interrupt_on_error` +
-		` FROM projections.targets`
+	prepareTargetStmt = `SELECT projections.targets2.id,` +
+		` projections.targets2.creation_date,` +
+		` projections.targets2.change_date,` +
+		` projections.targets2.resource_owner,` +
+		` projections.targets2.name,` +
+		` projections.targets2.target_type,` +
+		` projections.targets2.timeout,` +
+		` projections.targets2.endpoint,` +
+		` projections.targets2.interrupt_on_error,` +
+		` projections.targets2.signing_key` +
+		` FROM projections.targets2`
 	prepareTargetCols = []string{
 		"id",
+		"creation_date",
 		"change_date",
 		"resource_owner",
-		"sequence",
 		"name",
 		"target_type",
 		"timeout",
-		"url",
-		"async",
+		"endpoint",
 		"interrupt_on_error",
+		"signing_key",
 	}
 )
 
@@ -99,14 +100,19 @@ func Test_TargetPrepares(t *testing.T) {
 						{
 							"id",
 							testNow,
+							testNow,
 							"ro",
-							uint64(20211109),
 							"target-name",
 							domain.TargetTypeWebhook,
 							1 * time.Second,
 							"https://example.com",
 							true,
-							true,
+							&crypto.CryptoValue{
+								CryptoType: crypto.TypeEncryption,
+								Algorithm:  "alg",
+								KeyID:      "encKey",
+								Crypted:    []byte("crypted"),
+							},
 						},
 					},
 				),
@@ -117,18 +123,23 @@ func Test_TargetPrepares(t *testing.T) {
 				},
 				Targets: []*Target{
 					{
-						ID: "id",
 						ObjectDetails: domain.ObjectDetails{
+							ID:            "id",
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211109,
 						},
 						Name:             "target-name",
 						TargetType:       domain.TargetTypeWebhook,
 						Timeout:          1 * time.Second,
-						URL:              "https://example.com",
-						Async:            true,
+						Endpoint:         "https://example.com",
 						InterruptOnError: true,
+						signingKey: &crypto.CryptoValue{
+							CryptoType: crypto.TypeEncryption,
+							Algorithm:  "alg",
+							KeyID:      "encKey",
+							Crypted:    []byte("crypted"),
+						},
 					},
 				},
 			},
@@ -144,62 +155,118 @@ func Test_TargetPrepares(t *testing.T) {
 						{
 							"id-1",
 							testNow,
+							testNow,
 							"ro",
-							uint64(20211109),
 							"target-name1",
 							domain.TargetTypeWebhook,
 							1 * time.Second,
 							"https://example.com",
 							true,
-							false,
+							&crypto.CryptoValue{
+								CryptoType: crypto.TypeEncryption,
+								Algorithm:  "alg",
+								KeyID:      "encKey",
+								Crypted:    []byte("crypted"),
+							},
 						},
 						{
 							"id-2",
 							testNow,
+							testNow,
 							"ro",
-							uint64(20211110),
 							"target-name2",
 							domain.TargetTypeWebhook,
 							1 * time.Second,
 							"https://example.com",
 							false,
-							true,
+							&crypto.CryptoValue{
+								CryptoType: crypto.TypeEncryption,
+								Algorithm:  "alg",
+								KeyID:      "encKey",
+								Crypted:    []byte("crypted"),
+							},
+						},
+						{
+							"id-3",
+							testNow,
+							testNow,
+							"ro",
+							"target-name3",
+							domain.TargetTypeAsync,
+							1 * time.Second,
+							"https://example.com",
+							false,
+							&crypto.CryptoValue{
+								CryptoType: crypto.TypeEncryption,
+								Algorithm:  "alg",
+								KeyID:      "encKey",
+								Crypted:    []byte("crypted"),
+							},
 						},
 					},
 				),
 			},
 			object: &Targets{
 				SearchResponse: SearchResponse{
-					Count: 2,
+					Count: 3,
 				},
 				Targets: []*Target{
 					{
-						ID: "id-1",
 						ObjectDetails: domain.ObjectDetails{
+							ID:            "id-1",
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211109,
 						},
 						Name:             "target-name1",
 						TargetType:       domain.TargetTypeWebhook,
 						Timeout:          1 * time.Second,
-						URL:              "https://example.com",
-						Async:            true,
-						InterruptOnError: false,
+						Endpoint:         "https://example.com",
+						InterruptOnError: true,
+						signingKey: &crypto.CryptoValue{
+							CryptoType: crypto.TypeEncryption,
+							Algorithm:  "alg",
+							KeyID:      "encKey",
+							Crypted:    []byte("crypted"),
+						},
 					},
 					{
-						ID: "id-2",
 						ObjectDetails: domain.ObjectDetails{
+							ID:            "id-2",
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211110,
 						},
 						Name:             "target-name2",
 						TargetType:       domain.TargetTypeWebhook,
 						Timeout:          1 * time.Second,
-						URL:              "https://example.com",
-						Async:            false,
-						InterruptOnError: true,
+						Endpoint:         "https://example.com",
+						InterruptOnError: false,
+						signingKey: &crypto.CryptoValue{
+							CryptoType: crypto.TypeEncryption,
+							Algorithm:  "alg",
+							KeyID:      "encKey",
+							Crypted:    []byte("crypted"),
+						},
+					},
+					{
+						ObjectDetails: domain.ObjectDetails{
+							ID:            "id-3",
+							EventDate:     testNow,
+							CreationDate:  testNow,
+							ResourceOwner: "ro",
+						},
+						Name:             "target-name3",
+						TargetType:       domain.TargetTypeAsync,
+						Timeout:          1 * time.Second,
+						Endpoint:         "https://example.com",
+						InterruptOnError: false,
+						signingKey: &crypto.CryptoValue{
+							CryptoType: crypto.TypeEncryption,
+							Algorithm:  "alg",
+							KeyID:      "encKey",
+							Crypted:    []byte("crypted"),
+						},
 					},
 				},
 			},
@@ -249,30 +316,40 @@ func Test_TargetPrepares(t *testing.T) {
 					[]driver.Value{
 						"id",
 						testNow,
+						testNow,
 						"ro",
-						uint64(20211109),
 						"target-name",
 						domain.TargetTypeWebhook,
 						1 * time.Second,
 						"https://example.com",
 						true,
-						false,
+						&crypto.CryptoValue{
+							CryptoType: crypto.TypeEncryption,
+							Algorithm:  "alg",
+							KeyID:      "encKey",
+							Crypted:    []byte("crypted"),
+						},
 					},
 				),
 			},
 			object: &Target{
-				ID: "id",
 				ObjectDetails: domain.ObjectDetails{
+					ID:            "id",
 					EventDate:     testNow,
+					CreationDate:  testNow,
 					ResourceOwner: "ro",
-					Sequence:      20211109,
 				},
 				Name:             "target-name",
 				TargetType:       domain.TargetTypeWebhook,
 				Timeout:          1 * time.Second,
-				URL:              "https://example.com",
-				Async:            true,
-				InterruptOnError: false,
+				Endpoint:         "https://example.com",
+				InterruptOnError: true,
+				signingKey: &crypto.CryptoValue{
+					CryptoType: crypto.TypeEncryption,
+					Algorithm:  "alg",
+					KeyID:      "encKey",
+					Crypted:    []byte("crypted"),
+				},
 			},
 		},
 		{

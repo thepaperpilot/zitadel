@@ -8,44 +8,56 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/zitadel/zitadel/internal/database"
 	"github.com/zitadel/zitadel/internal/domain"
+	exec "github.com/zitadel/zitadel/internal/repository/execution"
 	"github.com/zitadel/zitadel/internal/zerrors"
 )
 
 var (
-	prepareExecutionsStmt = `SELECT projections.executions.id,` +
-		` projections.executions.change_date,` +
-		` projections.executions.resource_owner,` +
-		` projections.executions.sequence,` +
-		` projections.executions.targets,` +
-		` projections.executions.includes,` +
+	prepareExecutionsStmt = `SELECT projections.executions1.instance_id,` +
+		` projections.executions1.id,` +
+		` projections.executions1.creation_date,` +
+		` projections.executions1.change_date,` +
+		` execution_targets.targets,` +
 		` COUNT(*) OVER ()` +
-		` FROM projections.executions`
+		` FROM projections.executions1` +
+		` JOIN (` +
+		`SELECT instance_id, execution_id, JSONB_AGG( JSON_OBJECT( 'position' : position, 'include' : include, 'target' : target_id ) ) as targets` +
+		` FROM projections.executions1_targets` +
+		` GROUP BY instance_id, execution_id` +
+		`)` +
+		` AS execution_targets` +
+		` ON execution_targets.instance_id = projections.executions1.instance_id` +
+		` AND execution_targets.execution_id = projections.executions1.id`
 	prepareExecutionsCols = []string{
+		"instance_id",
 		"id",
+		"creation_date",
 		"change_date",
-		"resource_owner",
-		"sequence",
 		"targets",
-		"includes",
 		"count",
 	}
 
-	prepareExecutionStmt = `SELECT projections.executions.id,` +
-		` projections.executions.change_date,` +
-		` projections.executions.resource_owner,` +
-		` projections.executions.sequence,` +
-		` projections.executions.targets,` +
-		` projections.executions.includes` +
-		` FROM projections.executions`
+	prepareExecutionStmt = `SELECT projections.executions1.instance_id,` +
+		` projections.executions1.id,` +
+		` projections.executions1.creation_date,` +
+		` projections.executions1.change_date,` +
+		` execution_targets.targets` +
+		` FROM projections.executions1` +
+		` JOIN (` +
+		`SELECT instance_id, execution_id, JSONB_AGG( JSON_OBJECT( 'position' : position, 'include' : include, 'target' : target_id ) ) as targets` +
+		` FROM projections.executions1_targets` +
+		` GROUP BY instance_id, execution_id` +
+		`)` +
+		` AS execution_targets` +
+		` ON execution_targets.instance_id = projections.executions1.instance_id` +
+		` AND execution_targets.execution_id = projections.executions1.id`
 	prepareExecutionCols = []string{
+		"instance_id",
 		"id",
+		"creation_date",
 		"change_date",
-		"resource_owner",
-		"sequence",
 		"targets",
-		"includes",
 	}
 )
 
@@ -81,12 +93,11 @@ func Test_ExecutionPrepares(t *testing.T) {
 					prepareExecutionsCols,
 					[][]driver.Value{
 						{
+							"ro",
 							"id",
 							testNow,
-							"ro",
-							uint64(20211109),
-							database.TextArray[string]{"target"},
-							database.TextArray[string]{"include"},
+							testNow,
+							[]byte(`[{"position" : 1, "target" : "target"}, {"position" : 2, "include" : "include"}]`),
 						},
 					},
 				),
@@ -97,14 +108,16 @@ func Test_ExecutionPrepares(t *testing.T) {
 				},
 				Executions: []*Execution{
 					{
-						ID: "id",
 						ObjectDetails: domain.ObjectDetails{
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211109,
+							ID:            "id",
 						},
-						Targets:  database.TextArray[string]{"target"},
-						Includes: database.TextArray[string]{"include"},
+						Targets: []*exec.Target{
+							{Type: domain.ExecutionTargetTypeTarget, Target: "target"},
+							{Type: domain.ExecutionTargetTypeInclude, Target: "include"},
+						},
 					},
 				},
 			},
@@ -118,20 +131,18 @@ func Test_ExecutionPrepares(t *testing.T) {
 					prepareExecutionsCols,
 					[][]driver.Value{
 						{
+							"ro",
 							"id-1",
 							testNow,
-							"ro",
-							uint64(20211109),
-							database.TextArray[string]{"target1"},
-							database.TextArray[string]{"include1"},
+							testNow,
+							[]byte(`[{"position" : 1, "target" : "target"}, {"position" : 2, "include" : "include"}]`),
 						},
 						{
+							"ro",
 							"id-2",
 							testNow,
-							"ro",
-							uint64(20211110),
-							database.TextArray[string]{"target2"},
-							database.TextArray[string]{"include2"},
+							testNow,
+							[]byte(`[{"position" : 2, "target" : "target"}, {"position" : 1, "include" : "include"}]`),
 						},
 					},
 				),
@@ -142,24 +153,28 @@ func Test_ExecutionPrepares(t *testing.T) {
 				},
 				Executions: []*Execution{
 					{
-						ID: "id-1",
 						ObjectDetails: domain.ObjectDetails{
+							ID:            "id-1",
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211109,
 						},
-						Targets:  database.TextArray[string]{"target1"},
-						Includes: database.TextArray[string]{"include1"},
+						Targets: []*exec.Target{
+							{Type: domain.ExecutionTargetTypeTarget, Target: "target"},
+							{Type: domain.ExecutionTargetTypeInclude, Target: "include"},
+						},
 					},
 					{
-						ID: "id-2",
 						ObjectDetails: domain.ObjectDetails{
+							ID:            "id-2",
 							EventDate:     testNow,
+							CreationDate:  testNow,
 							ResourceOwner: "ro",
-							Sequence:      20211110,
 						},
-						Targets:  database.TextArray[string]{"target2"},
-						Includes: database.TextArray[string]{"include2"},
+						Targets: []*exec.Target{
+							{Type: domain.ExecutionTargetTypeInclude, Target: "include"},
+							{Type: domain.ExecutionTargetTypeTarget, Target: "target"},
+						},
 					},
 				},
 			},
@@ -207,24 +222,25 @@ func Test_ExecutionPrepares(t *testing.T) {
 					regexp.QuoteMeta(prepareExecutionStmt),
 					prepareExecutionCols,
 					[]driver.Value{
+						"ro",
 						"id",
 						testNow,
-						"ro",
-						uint64(20211109),
-						database.TextArray[string]{"target"},
-						database.TextArray[string]{"include"},
+						testNow,
+						[]byte(`[{"position" : 1, "target" : "target"}, {"position" : 2, "include" : "include"}]`),
 					},
 				),
 			},
 			object: &Execution{
-				ID: "id",
 				ObjectDetails: domain.ObjectDetails{
+					ID:            "id",
 					EventDate:     testNow,
+					CreationDate:  testNow,
 					ResourceOwner: "ro",
-					Sequence:      20211109,
 				},
-				Targets:  database.TextArray[string]{"target"},
-				Includes: database.TextArray[string]{"include"},
+				Targets: []*exec.Target{
+					{Type: domain.ExecutionTargetTypeTarget, Target: "target"},
+					{Type: domain.ExecutionTargetTypeInclude, Target: "include"},
+				},
 			},
 		},
 		{

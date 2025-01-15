@@ -36,11 +36,16 @@ func (m *InstanceFeaturesReadModel) Reduce() (err error) {
 		case *feature_v2.ResetEvent:
 			m.reduceReset()
 		case *feature_v1.SetEvent[feature_v1.Boolean]:
-			err = m.reduceBoolFeature(
+			err = reduceInstanceFeatureSet(
+				m.instance,
 				feature_v1.DefaultLoginInstanceEventToV2(e),
 			)
 		case *feature_v2.SetEvent[bool]:
-			err = m.reduceBoolFeature(e)
+			err = reduceInstanceFeatureSet(m.instance, e)
+		case *feature_v2.SetEvent[*feature.LoginV2]:
+			err = reduceInstanceFeatureSet(m.instance, e)
+		case *feature_v2.SetEvent[[]feature.ImprovedPerformanceType]:
+			err = reduceInstanceFeatureSet(m.instance, e)
 		}
 		if err != nil {
 			return err
@@ -63,6 +68,13 @@ func (m *InstanceFeaturesReadModel) Query() *eventstore.SearchQueryBuilder {
 			feature_v2.InstanceUserSchemaEventType,
 			feature_v2.InstanceTokenExchangeEventType,
 			feature_v2.InstanceActionsEventType,
+			feature_v2.InstanceImprovedPerformanceEventType,
+			feature_v2.InstanceWebKeyEventType,
+			feature_v2.InstanceDebugOIDCParentErrorEventType,
+			feature_v2.InstanceOIDCSingleV1SessionTerminationEventType,
+			feature_v2.InstanceDisableUserTokenEvent,
+			feature_v2.InstanceEnableBackChannelLogout,
+			feature_v2.InstanceLoginVersion,
 		).
 		Builder().ResourceOwner(m.ResourceOwner)
 }
@@ -71,12 +83,8 @@ func (m *InstanceFeaturesReadModel) reduceReset() {
 	if m.populateFromSystem() {
 		return
 	}
-	m.instance.LoginDefaultOrg = FeatureSource[bool]{}
-	m.instance.TriggerIntrospectionProjections = FeatureSource[bool]{}
-	m.instance.LegacyIntrospection = FeatureSource[bool]{}
-	m.instance.UserSchema = FeatureSource[bool]{}
-	m.instance.TokenExchange = FeatureSource[bool]{}
-	m.instance.Actions = FeatureSource[bool]{}
+	m.instance = nil
+	m.instance = new(InstanceFeatures)
 }
 
 func (m *InstanceFeaturesReadModel) populateFromSystem() bool {
@@ -89,35 +97,48 @@ func (m *InstanceFeaturesReadModel) populateFromSystem() bool {
 	m.instance.UserSchema = m.system.UserSchema
 	m.instance.TokenExchange = m.system.TokenExchange
 	m.instance.Actions = m.system.Actions
+	m.instance.ImprovedPerformance = m.system.ImprovedPerformance
+	m.instance.OIDCSingleV1SessionTermination = m.system.OIDCSingleV1SessionTermination
+	m.instance.DisableUserTokenEvent = m.system.DisableUserTokenEvent
+	m.instance.EnableBackChannelLogout = m.system.EnableBackChannelLogout
+	m.instance.LoginV2 = m.system.LoginV2
 	return true
 }
 
-func (m *InstanceFeaturesReadModel) reduceBoolFeature(event *feature_v2.SetEvent[bool]) error {
+func reduceInstanceFeatureSet[T any](features *InstanceFeatures, event *feature_v2.SetEvent[T]) error {
 	level, key, err := event.FeatureInfo()
 	if err != nil {
 		return err
 	}
-	var dst *FeatureSource[bool]
-
 	switch key {
 	case feature.KeyUnspecified:
 		return nil
 	case feature.KeyLoginDefaultOrg:
-		dst = &m.instance.LoginDefaultOrg
+		features.LoginDefaultOrg.set(level, event.Value)
 	case feature.KeyTriggerIntrospectionProjections:
-		dst = &m.instance.TriggerIntrospectionProjections
+		features.TriggerIntrospectionProjections.set(level, event.Value)
 	case feature.KeyLegacyIntrospection:
-		dst = &m.instance.LegacyIntrospection
+		features.LegacyIntrospection.set(level, event.Value)
 	case feature.KeyUserSchema:
-		dst = &m.instance.UserSchema
+		features.UserSchema.set(level, event.Value)
 	case feature.KeyTokenExchange:
-		dst = &m.instance.TokenExchange
+		features.TokenExchange.set(level, event.Value)
 	case feature.KeyActions:
-		dst = &m.instance.Actions
-	}
-	*dst = FeatureSource[bool]{
-		Level: level,
-		Value: event.Value,
+		features.Actions.set(level, event.Value)
+	case feature.KeyImprovedPerformance:
+		features.ImprovedPerformance.set(level, event.Value)
+	case feature.KeyWebKey:
+		features.WebKey.set(level, event.Value)
+	case feature.KeyDebugOIDCParentError:
+		features.DebugOIDCParentError.set(level, event.Value)
+	case feature.KeyOIDCSingleV1SessionTermination:
+		features.OIDCSingleV1SessionTermination.set(level, event.Value)
+	case feature.KeyDisableUserTokenEvent:
+		features.DisableUserTokenEvent.set(level, event.Value)
+	case feature.KeyEnableBackChannelLogout:
+		features.EnableBackChannelLogout.set(level, event.Value)
+	case feature.KeyLoginV2:
+		features.LoginV2.set(level, event.Value)
 	}
 	return nil
 }

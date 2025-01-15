@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/zitadel/logging"
 
 	"github.com/zitadel/zitadel/internal/api/authz"
+	"github.com/zitadel/zitadel/internal/database"
+	"github.com/zitadel/zitadel/internal/zerrors"
 )
 
 // Eventstore abstracts all functions needed to store valid events
@@ -19,12 +20,9 @@ type Eventstore struct {
 	PushTimeout time.Duration
 	maxRetries  int
 
-	pusher  Pusher
-	querier Querier
-
-	instances         []string
-	lastInstanceQuery time.Time
-	instancesMu       sync.Mutex
+	pusher   Pusher
+	querier  Querier
+	searcher Searcher
 }
 
 var (
@@ -62,10 +60,9 @@ func NewEventstore(config *Config) *Eventstore {
 		PushTimeout: config.PushTimeout,
 		maxRetries:  int(config.MaxRetries),
 
-		pusher:  config.Pusher,
-		querier: config.Querier,
-
-		instancesMu: sync.Mutex{},
+		pusher:   config.Pusher,
+		querier:  config.Querier,
+		searcher: config.Searcher,
 	}
 }
 
@@ -81,6 +78,12 @@ func (es *Eventstore) Health(ctx context.Context) error {
 // Push pushes the events in a single transaction
 // an event needs at least an aggregate
 func (es *Eventstore) Push(ctx context.Context, cmds ...Command) ([]Event, error) {
+	return es.PushWithClient(ctx, nil, cmds...)
+}
+
+// PushWithClient pushes the events in a single transaction using the provided database client
+// an event needs at least an aggregate
+func (es *Eventstore) PushWithClient(ctx context.Context, client database.ContextQueryExecuter, cmds ...Command) ([]Event, error) {
 	if es.PushTimeout > 0 {
 		var cancel func()
 		ctx, cancel = context.WithTimeout(ctx, es.PushTimeout)
@@ -96,12 +99,24 @@ func (es *Eventstore) Push(ctx context.Context, cmds ...Command) ([]Event, error
 	// https://github.com/zitadel/zitadel/issues/7202
 retry:
 	for i := 0; i <= es.maxRetries; i++ {
-		events, err = es.pusher.Push(ctx, cmds...)
-		var pgErr *pgconn.PgError
-		if !errors.As(err, &pgErr) || pgErr.ConstraintName != "events2_pkey" || pgErr.SQLState() != "23505" {
+		events, err = es.pusher.Push(ctx, client, cmds...)
+		// if there is a transaction passed the calling function needs to retry
+		if _, ok := client.(database.Tx); ok {
 			break retry
 		}
-		logging.WithError(err).Info("eventstore push retry")
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) {
+			break retry
+		}
+		if pgErr.ConstraintName == "events2_pkey" && pgErr.SQLState() == "23505" {
+			logging.WithError(err).Info("eventstore push retry")
+			continue
+		}
+		if pgErr.SQLState() == "CR000" || pgErr.SQLState() == "40001" {
+			logging.WithError(err).Info("eventstore push retry")
+			continue
+		}
+		break retry
 	}
 	if err != nil {
 		return nil, err
@@ -125,6 +140,20 @@ func (es *Eventstore) EventTypes() []string {
 
 func (es *Eventstore) AggregateTypes() []string {
 	return aggregateTypes
+}
+
+// FillFields implements the [Searcher] interface
+func (es *Eventstore) FillFields(ctx context.Context, events ...FillFieldsEvent) error {
+	return es.searcher.FillFields(ctx, events...)
+}
+
+// Search implements the [Searcher] interface
+func (es *Eventstore) Search(ctx context.Context, conditions ...map[FieldType]any) ([]*SearchResult, error) {
+	if len(conditions) == 0 {
+		return nil, zerrors.ThrowInvalidArgument(nil, "V3-5Xbr1", "no search conditions")
+	}
+
+	return es.searcher.Search(ctx, conditions...)
 }
 
 // Filter filters the stored events based on the searchQuery
@@ -207,27 +236,14 @@ func (es *Eventstore) LatestSequence(ctx context.Context, queryFactory *SearchQu
 	return es.querier.LatestSequence(ctx, queryFactory)
 }
 
-// InstanceIDs returns the instance ids found by the search query
-// forceDBCall forces to query the database, the instance ids are not cached
-func (es *Eventstore) InstanceIDs(ctx context.Context, maxAge time.Duration, forceDBCall bool, queryFactory *SearchQueryBuilder) ([]string, error) {
-	es.instancesMu.Lock()
-	defer es.instancesMu.Unlock()
+// InstanceIDs returns the distinct instance ids found by the search query
+// Warning: this function can have high impact on performance, only use this function during setup
+func (es *Eventstore) InstanceIDs(ctx context.Context, queryFactory *SearchQueryBuilder) ([]string, error) {
+	return es.querier.InstanceIDs(ctx, queryFactory)
+}
 
-	if !forceDBCall && time.Since(es.lastInstanceQuery) <= maxAge {
-		return es.instances, nil
-	}
-
-	instances, err := es.querier.InstanceIDs(ctx, queryFactory)
-	if err != nil {
-		return nil, err
-	}
-
-	if !forceDBCall {
-		es.instances = instances
-		es.lastInstanceQuery = time.Now()
-	}
-
-	return instances, nil
+func (es *Eventstore) Client() *database.DB {
+	return es.querier.Client()
 }
 
 type QueryReducer interface {
@@ -253,13 +269,33 @@ type Querier interface {
 	LatestSequence(ctx context.Context, queryFactory *SearchQueryBuilder) (float64, error)
 	// InstanceIDs returns the instance ids found by the search query
 	InstanceIDs(ctx context.Context, queryFactory *SearchQueryBuilder) ([]string, error)
+	// Client returns the underlying database connection
+	Client() *database.DB
 }
 
 type Pusher interface {
 	// Health checks if the connection to the storage is available
 	Health(ctx context.Context) error
 	// Push stores the actions
-	Push(ctx context.Context, commands ...Command) (_ []Event, err error)
+	Push(ctx context.Context, client database.ContextQueryExecuter, commands ...Command) (_ []Event, err error)
+	// Client returns the underlying database connection
+	Client() *database.DB
+}
+
+type FillFieldsEvent interface {
+	Event
+	Fields() []*FieldOperation
+}
+
+type Searcher interface {
+	// Search allows to search for specific fields of objects
+	// The instance id is taken from the context
+	// The list of conditions are combined with AND
+	// The search fields are combined with OR
+	// At least one must be defined
+	Search(ctx context.Context, conditions ...map[FieldType]any) (result []*SearchResult, err error)
+	// FillFields is to insert the fields of previously stored events
+	FillFields(ctx context.Context, events ...FillFieldsEvent) error
 }
 
 func appendEventType(typ EventType) {

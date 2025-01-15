@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/zitadel/zitadel/internal/domain"
+	"github.com/zitadel/zitadel/internal/feature"
 )
 
 type InstanceFeatures struct {
@@ -14,6 +15,13 @@ type InstanceFeatures struct {
 	UserSchema                      FeatureSource[bool]
 	TokenExchange                   FeatureSource[bool]
 	Actions                         FeatureSource[bool]
+	ImprovedPerformance             FeatureSource[[]feature.ImprovedPerformanceType]
+	WebKey                          FeatureSource[bool]
+	DebugOIDCParentError            FeatureSource[bool]
+	OIDCSingleV1SessionTermination  FeatureSource[bool]
+	DisableUserTokenEvent           FeatureSource[bool]
+	EnableBackChannelLogout         FeatureSource[bool]
+	LoginV2                         FeatureSource[*feature.LoginV2]
 }
 
 func (q *Queries) GetInstanceFeatures(ctx context.Context, cascade bool) (_ *InstanceFeatures, err error) {

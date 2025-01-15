@@ -5,6 +5,7 @@ import (
 	"embed"
 	_ "embed"
 	"net/http"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,6 +22,7 @@ import (
 	auth_view "github.com/zitadel/zitadel/internal/auth/repository/eventsourcing/view"
 	"github.com/zitadel/zitadel/internal/authz"
 	authz_es "github.com/zitadel/zitadel/internal/authz/repository/eventsourcing/eventstore"
+	"github.com/zitadel/zitadel/internal/cache/connector"
 	"github.com/zitadel/zitadel/internal/command"
 	cryptoDB "github.com/zitadel/zitadel/internal/crypto/database"
 	"github.com/zitadel/zitadel/internal/database"
@@ -34,6 +36,8 @@ import (
 	notify_handler "github.com/zitadel/zitadel/internal/notification"
 	"github.com/zitadel/zitadel/internal/query"
 	"github.com/zitadel/zitadel/internal/query/projection"
+	es_v4 "github.com/zitadel/zitadel/internal/v2/eventstore"
+	es_v4_pg "github.com/zitadel/zitadel/internal/v2/eventstore/postgres"
 	"github.com/zitadel/zitadel/internal/webauthn"
 )
 
@@ -57,13 +61,16 @@ Requirements:
 			err = BindInitProjections(cmd)
 			logging.OnError(err).Fatal("unable to bind \"init-projections\" flag")
 
+			err = bindForMirror(cmd)
+			logging.OnError(err).Fatal("unable to bind \"for-mirror\" flag")
+
 			config := MustNewConfig(viper.GetViper())
 			steps := MustNewSteps(viper.New())
 
 			masterKey, err := key.MasterKey(cmd)
 			logging.OnError(err).Panic("No master key provided")
 
-			Setup(config, steps, masterKey)
+			Setup(cmd.Context(), config, steps, masterKey)
 		},
 	}
 
@@ -77,6 +84,7 @@ Requirements:
 func Flags(cmd *cobra.Command) {
 	cmd.PersistentFlags().StringArrayVar(&stepFiles, "steps", nil, "paths to step files to overwrite default steps")
 	cmd.Flags().Bool("init-projections", viper.GetBool("InitProjections"), "beta feature: initializes projections after they are created, allows smooth start as projections are up to date")
+	cmd.Flags().Bool("for-mirror", viper.GetBool("ForMirror"), "use this flag if you want to mirror your existing data")
 	key.AddMasterKeyFlag(cmd)
 	tls.AddTLSModeFlag(cmd)
 }
@@ -85,8 +93,11 @@ func BindInitProjections(cmd *cobra.Command) error {
 	return viper.BindPFlag("InitProjections.Enabled", cmd.Flags().Lookup("init-projections"))
 }
 
-func Setup(config *Config, steps *Steps, masterKey string) {
-	ctx := context.Background()
+func bindForMirror(cmd *cobra.Command) error {
+	return viper.BindPFlag("ForMirror", cmd.Flags().Lookup("for-mirror"))
+}
+
+func Setup(ctx context.Context, config *Config, steps *Steps, masterKey string) {
 	logging.Info("setup started")
 
 	i18n.MustLoadSupportedLanguagesFromDir()
@@ -99,13 +110,20 @@ func Setup(config *Config, steps *Steps, masterKey string) {
 	logging.OnError(err).Fatal("unable to connect to database")
 
 	config.Eventstore.Querier = old_es.NewCRDB(queryDBClient)
-	config.Eventstore.Pusher = new_es.NewEventstore(esPusherDBClient)
+	esV3 := new_es.NewEventstore(esPusherDBClient)
+	config.Eventstore.Pusher = esV3
+	config.Eventstore.Searcher = esV3
 	eventstoreClient := eventstore.NewEventstore(config.Eventstore)
+
 	logging.OnError(err).Fatal("unable to start eventstore")
+	eventstoreV4 := es_v4.NewEventstoreFromOne(es_v4_pg.New(queryDBClient, &es_v4_pg.Config{
+		MaxRetries: config.Eventstore.MaxRetries,
+	}))
 
 	steps.s1ProjectionTable = &ProjectionTable{dbClient: queryDBClient.DB}
 	steps.s2AssetsTable = &AssetTable{dbClient: queryDBClient.DB}
 
+	steps.FirstInstance.Skip = config.ForMirror || steps.FirstInstance.Skip
 	steps.FirstInstance.instanceSetup = config.DefaultInstance
 	steps.FirstInstance.userEncryptionKey = config.EncryptionKeys.User
 	steps.FirstInstance.smtpEncryptionKey = config.EncryptionKeys.SMTP
@@ -138,6 +156,24 @@ func Setup(config *Config, steps *Steps, masterKey string) {
 	steps.s23CorrectGlobalUniqueConstraints = &CorrectGlobalUniqueConstraints{dbClient: esPusherDBClient}
 	steps.s24AddActorToAuthTokens = &AddActorToAuthTokens{dbClient: queryDBClient}
 	steps.s25User11AddLowerFieldsToVerifiedEmail = &User11AddLowerFieldsToVerifiedEmail{dbClient: esPusherDBClient}
+	steps.s26AuthUsers3 = &AuthUsers3{dbClient: esPusherDBClient}
+	steps.s27IDPTemplate6SAMLNameIDFormat = &IDPTemplate6SAMLNameIDFormat{dbClient: esPusherDBClient}
+	steps.s28AddFieldTable = &AddFieldTable{dbClient: esPusherDBClient}
+	steps.s29FillFieldsForProjectGrant = &FillFieldsForProjectGrant{eventstore: eventstoreClient}
+	steps.s30FillFieldsForOrgDomainVerified = &FillFieldsForOrgDomainVerified{eventstore: eventstoreClient}
+	steps.s31AddAggregateIndexToFields = &AddAggregateIndexToFields{dbClient: esPusherDBClient}
+	steps.s32AddAuthSessionID = &AddAuthSessionID{dbClient: esPusherDBClient}
+	steps.s33SMSConfigs3TwilioAddVerifyServiceSid = &SMSConfigs3TwilioAddVerifyServiceSid{dbClient: esPusherDBClient}
+	steps.s34AddCacheSchema = &AddCacheSchema{dbClient: queryDBClient}
+	steps.s35AddPositionToIndexEsWm = &AddPositionToIndexEsWm{dbClient: esPusherDBClient}
+	steps.s36FillV2Milestones = &FillV3Milestones{dbClient: queryDBClient, eventstore: eventstoreClient}
+	steps.s37Apps7OIDConfigsBackChannelLogoutURI = &Apps7OIDConfigsBackChannelLogoutURI{dbClient: esPusherDBClient}
+	steps.s38BackChannelLogoutNotificationStart = &BackChannelLogoutNotificationStart{dbClient: esPusherDBClient, esClient: eventstoreClient}
+	steps.s40InitPushFunc = &InitPushFunc{dbClient: esPusherDBClient}
+	steps.s42Apps7OIDCConfigsLoginVersion = &Apps7OIDCConfigsLoginVersion{dbClient: esPusherDBClient}
+	steps.s43CreateFieldsDomainIndex = &CreateFieldsDomainIndex{dbClient: queryDBClient}
+	steps.s44ReplaceCurrentSequencesIndex = &ReplaceCurrentSequencesIndex{dbClient: esPusherDBClient}
+	steps.s45CorrectProjectOwners = &CorrectProjectOwners{eventstore: eventstoreClient}
 
 	err = projection.Create(ctx, projectionDBClient, eventstoreClient, config.Projections, nil, nil, nil)
 	logging.OnError(err).Fatal("unable to start projections")
@@ -154,12 +190,21 @@ func Setup(config *Config, steps *Steps, masterKey string) {
 			es:      eventstoreClient,
 			Version: build.Version(),
 		},
+		&DeleteStaleOrgFields{
+			eventstore: eventstoreClient,
+		},
+		&FillFieldsForInstanceDomains{
+			eventstore: eventstoreClient,
+		},
 	}
 
 	for _, step := range []migration.Migration{
 		steps.s14NewEventsTable,
+		steps.s40InitPushFunc,
 		steps.s1ProjectionTable,
 		steps.s2AssetsTable,
+		steps.s28AddFieldTable,
+		steps.s31AddAggregateIndexToFields,
 		steps.FirstInstance,
 		steps.s5LastFailed,
 		steps.s6OwnerRemoveColumns,
@@ -175,6 +220,15 @@ func Setup(config *Config, steps *Steps, masterKey string) {
 		steps.s22ActiveInstancesIndex,
 		steps.s23CorrectGlobalUniqueConstraints,
 		steps.s24AddActorToAuthTokens,
+		steps.s26AuthUsers3,
+		steps.s29FillFieldsForProjectGrant,
+		steps.s30FillFieldsForOrgDomainVerified,
+		steps.s34AddCacheSchema,
+		steps.s35AddPositionToIndexEsWm,
+		steps.s36FillV2Milestones,
+		steps.s38BackChannelLogoutNotificationStart,
+		steps.s44ReplaceCurrentSequencesIndex,
+		steps.s45CorrectProjectOwners,
 	} {
 		mustExecuteMigration(ctx, eventstoreClient, step, "migration failed")
 	}
@@ -188,15 +242,22 @@ func Setup(config *Config, steps *Steps, masterKey string) {
 		steps.s18AddLowerFieldsToLoginNames,
 		steps.s21AddBlockFieldToLimits,
 		steps.s25User11AddLowerFieldsToVerifiedEmail,
+		steps.s27IDPTemplate6SAMLNameIDFormat,
+		steps.s32AddAuthSessionID,
+		steps.s33SMSConfigs3TwilioAddVerifyServiceSid,
+		steps.s37Apps7OIDConfigsBackChannelLogoutURI,
+		steps.s42Apps7OIDCConfigsLoginVersion,
+		steps.s43CreateFieldsDomainIndex,
 	} {
 		mustExecuteMigration(ctx, eventstoreClient, step, "migration failed")
 	}
 
 	// projection initialization must be done last, since the steps above might add required columns to the projections
-	if config.InitProjections.Enabled {
+	if !config.ForMirror && config.InitProjections.Enabled {
 		initProjections(
 			ctx,
 			eventstoreClient,
+			eventstoreV4,
 			queryDBClient,
 			projectionDBClient,
 			masterKey,
@@ -210,14 +271,45 @@ func mustExecuteMigration(ctx context.Context, eventstoreClient *eventstore.Even
 	logging.WithFields("name", step.String()).OnError(err).Fatal(errorMsg)
 }
 
+// readStmt reads a single file from the embedded FS,
+// under the folder/typ/filename path.
+// Typ describes the database dialect and may be omitted if no
+// dialect specific migration is specified.
 func readStmt(fs embed.FS, folder, typ, filename string) (string, error) {
-	stmt, err := fs.ReadFile(folder + "/" + typ + "/" + filename)
+	stmt, err := fs.ReadFile(filepath.Join(folder, typ, filename))
 	return string(stmt), err
+}
+
+type statement struct {
+	file  string
+	query string
+}
+
+// readStatements reads all files from the embedded FS,
+// under the folder/type path.
+// Typ describes the database dialect and may be omitted if no
+// dialect specific migration is specified.
+func readStatements(fs embed.FS, folder, typ string) ([]statement, error) {
+	basePath := filepath.Join(folder, typ)
+	dir, err := fs.ReadDir(basePath)
+	if err != nil {
+		return nil, err
+	}
+	statements := make([]statement, len(dir))
+	for i, file := range dir {
+		statements[i].file = file.Name()
+		statements[i].query, err = readStmt(fs, folder, typ, file.Name())
+		if err != nil {
+			return nil, err
+		}
+	}
+	return statements, nil
 }
 
 func initProjections(
 	ctx context.Context,
 	eventstoreClient *eventstore.Eventstore,
+	eventstoreV4 *es_v4.EventStore,
 	queryDBClient,
 	projectionDBClient *database.DB,
 	masterKey string,
@@ -271,17 +363,24 @@ func initProjections(
 	}
 
 	sessionTokenVerifier := internal_authz.SessionTokenVerifier(keys.OIDC)
+
+	cacheConnectors, err := connector.StartConnectors(config.Caches, queryDBClient)
+	logging.OnError(err).Fatal("unable to start caches")
+
 	queries, err := query.StartQueries(
 		ctx,
 		eventstoreClient,
+		eventstoreV4.Querier,
 		queryDBClient,
 		projectionDBClient,
+		cacheConnectors,
 		config.Projections,
 		config.SystemDefaults,
 		keys.IDPConfig,
 		keys.OTP,
 		keys.OIDC,
 		keys.SAML,
+		keys.Target,
 		config.InternalAuthZ.RolePermissionMappings,
 		sessionTokenVerifier,
 		func(q *query.Queries) domain.PermissionCheck {
@@ -317,8 +416,9 @@ func initProjections(
 	permissionCheck := func(ctx context.Context, permission, orgID, resourceID string) (err error) {
 		return internal_authz.CheckPermission(ctx, authZRepo, config.InternalAuthZ.RolePermissionMappings, permission, orgID, resourceID)
 	}
-	commands, err := command.StartCommands(
+	commands, err := command.StartCommands(ctx,
 		eventstoreClient,
+		cacheConnectors,
 		config.SystemDefaults,
 		config.InternalAuthZ.RolePermissionMappings,
 		staticStorage,
@@ -337,6 +437,7 @@ func initProjections(
 		keys.DomainVerification,
 		keys.OIDC,
 		keys.SAML,
+		keys.Target,
 		&http.Client{},
 		permissionCheck,
 		sessionTokenVerifier,
@@ -350,7 +451,9 @@ func initProjections(
 		ctx,
 		config.Projections.Customizations["notifications"],
 		config.Projections.Customizations["notificationsquotas"],
+		config.Projections.Customizations["backchannel"],
 		config.Projections.Customizations["telemetry"],
+		config.Notifications,
 		*config.Telemetry,
 		config.ExternalDomain,
 		config.ExternalPort,
@@ -363,6 +466,9 @@ func initProjections(
 		keys.User,
 		keys.SMTP,
 		keys.SMS,
+		keys.OIDC,
+		config.OIDC.DefaultBackChannelLogoutLifetime,
+		queryDBClient,
 	)
 	for _, p := range notify_handler.Projections() {
 		err := migration.Migrate(ctx, eventstoreClient, p)
