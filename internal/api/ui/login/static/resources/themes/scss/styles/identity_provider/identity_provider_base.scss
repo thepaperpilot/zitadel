@@ -101,6 +101,6 @@ $lgn-idp-logo-size: 46px;
   border-radius: 5px;
 }
 
-.lgn-idp:not(.google):not(.github):not(.gitlab) .logo:last-child {
+.lgn-idp:not(.google):not(.github):not(.gitlab):last-child .logo {
   background-image: url(../../../images/idp/galaxy.svg);
 }
